@@ -6,40 +6,51 @@ namespace dos
 {
 	const int MAX_ENTITIES = 1000;
 
-	struct Entity
+	struct Transform
 	{
-		int entityID;
-		int parentID;
+		hmm_mat4 localTransform;
+		hmm_mat4 worldTransform;
 	};
 
-	class SceneManager
+	struct EntityTransform
 	{
-	public:
-		std::array<hmm_mat4, MAX_ENTITIES> transforms;
-		std::array<int, MAX_ENTITIES> parents;
-	
-		std::shared_ptr<Entity> addEntity(Entity* parent = nullptr)
+		hmm_mat4* transform;
+		hmm_mat4* parentTransform;
+	};
+
+	struct Scene
+	{
+		Scene()
+			: transforms(MAX_ENTITIES)
+			//, hierarchy(MAX_ENTITIES)
+			, lastEntityIdx(0)
 		{
-			if (lastEntityIdx == transforms.size())
-			{
-				Logger::Error("Exceeded max entity count");
-				return nullptr;
-			}
-
-			auto entity = std::make_shared<Entity>();
-			entity->entityID = lastEntityIdx;
-			entity->parentID = parent ? parent->entityID : 0;
-
-			lastEntityIdx++;
 		}
 
-		void removeEntity(const Entity& entity)
-		{
-			std::swap(transforms[lastEntityIdx], transforms[entity.entityID]);
-		}
-
-	private:
+		std::vector<Transform> transforms;
+		//std::vector<int> hierarchy;
 		int lastEntityIdx;
 	};
-	
+
+	EntityTransform addEntity(Scene& scene)
+	{
+	}
+
+	Entity addEntity(Scene& scene, Entity& parent)
+	{
+	}
+
+	void removeEntity(Scene& scene, const Entity& entity) 
+	{
+	}
+
+	void generateWorldTransform(Scene& scene)
+	{
+		for (int idx = 1; idx < scene.transforms.size(); idx++)
+		{
+			int parentIdx = scene.hierarchy[idx];
+			scene.transforms[idx].worldTransform = scene.transforms[idx].localTransform * scene.transforms[parentIdx].worldTransform;
+		}
+	}
 }
+

@@ -11,6 +11,7 @@
 #include <vector>
 #include <array>
 #include <stdint.h>
+#include <cassert>
 
 // DOS
 #include "logger.h"
@@ -20,6 +21,8 @@
 #define HANDMADE_MATH_CPP_MODE
 #define HANDMADE_MATH_NO_INLINE
 #include "HandmadeMath.h"
+
+#define check(expr) if (!(expr)) {Logger::Error("Triggered assertion at" __LOCATION_INFO__); assert(false); }
 
 // DAG for hierarchy
 // actually, when an entity is removed or added, we update the array representation of the depth first order, otherwise we can reuse the representation
@@ -32,24 +35,8 @@
 
 namespace dos // D ata O riented S cene
 {
-	struct Plane
-	{
-	};
 
-	struct Frustum
-	{
-		// 4 Planes
-	};
-
-	struct Transform
-	{
-		hmm_mat4 trafo;
-		hmm_vec3 position;
-		hmm_quaternion rotation;
-	};
 }
-
-
 
 namespace dos { namespace hierarchy {
 
