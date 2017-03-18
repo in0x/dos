@@ -16,15 +16,17 @@ int main(int argc, char** argv)
 
 	Scene scene;
 
-	auto root = addEntity(scene);
+	auto root = scene.getRoot();
 
-	auto node11 = addEntity(scene, root);
-	auto node12 = addEntity(scene, root);
+	auto chassis = addTransform(scene, "chassis");
+	auto road = addTransform(scene, "road");
 
-	auto node21 = addEntity(scene, node11);
-	auto node31 = addEntity(scene, node21);
+	auto under = addTransform(scene, chassis, "under");
+	auto wheel = addTransform(scene, under, "wheel");
 
-	auto node13 = addEntity(scene, root);
+	auto signs = addTransform(scene, road, "signs");
+
+	auto interior = addTransform(scene, chassis, "interior");
 
 	return 0;
 }
