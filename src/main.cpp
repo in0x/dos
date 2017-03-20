@@ -9,12 +9,7 @@ int main(int argc, char** argv)
 	log.logToConsole = true;
 	log.logToFile = true;
 
-	hmm_vec2 a{ 0.5f, 0.5f };
-	hmm_vec2 b{ 0.5f, 0.5f };
-
-	auto c = a + b;
-
-	Scene scene;
+	/*Scene scene;
 
 	auto root = scene.getRoot();
 
@@ -26,7 +21,18 @@ int main(int argc, char** argv)
 
 	auto signs = addTransform(scene, road, "signs");
 
-	auto interior = addTransform(scene, chassis, "interior");
+	auto interior = addTransform(scene, chassis, "interior");*/
+
+	Scene scene;
+
+	auto N1 = scene.addTransform();
+	auto N2 = scene.addTransform();
+	auto N3 = scene.addTransform(N1);
+	auto N4 = scene.addTransform(N1);
+	auto N5 = scene.addTransform();
+	auto N6 = scene.addTransform(N3);
+	auto N7 = scene.addTransform(N5);
+	auto N8 = scene.addTransform(N2);
 
 	return 0;
 }

@@ -45,3 +45,15 @@ namespace dos { namespace hierarchy {
 namespace dos { namespace culling {
 	
 }}
+
+/*
+	APPROACHES:
+
+	Keep one unsorted array, only guarantee is that parent is before child
+
+	Keep one sorted array, depth first order -> keeping order is really complex / expensive due to memory shifts
+
+	Keep array per hierarchy level, might not be very cache friendly
+
+	Keep tree frontend, which stores pointers to transform, sort array of transforms into depth first order from tree -> has to be done everytime the tree changes
+*/
