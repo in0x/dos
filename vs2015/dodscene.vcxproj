@@ -133,15 +133,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\gl3w\src\gl3w.c" />
     <ClCompile Include="..\src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\dos.h" />
     <ClInclude Include="..\src\dos_scene.h" />
+    <ClInclude Include="..\src\gl3w\include\GL\gl3w.h" />
+    <ClInclude Include="..\src\gl3w\include\GL\glcorearb.h" />
     <ClInclude Include="..\src\glfw\glfw3.h" />
     <ClInclude Include="..\src\glfw\glfw3native.h" />
     <ClInclude Include="..\src\HandmadeMath.h" />
     <ClInclude Include="..\src\logger.h" />
+    <ClInclude Include="..\src\shader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\shader.frag" />
+    <None Include="..\src\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

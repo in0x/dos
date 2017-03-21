@@ -100,7 +100,6 @@ namespace dos
 
 #endif // DEPTH_FIRST
 
-
 #if UNSORTED
 
 	const int MAX_ENTITIES = /*UINT16_MAX*/ 1000;

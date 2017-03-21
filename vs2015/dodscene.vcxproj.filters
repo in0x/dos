@@ -2,6 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\gl3w\src\gl3w.c">
+      <Filter>gl3w</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\HandmadeMath.h" />
@@ -14,10 +17,24 @@
     <ClInclude Include="..\src\glfw\glfw3.h">
       <Filter>glfw</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\gl3w\include\GL\gl3w.h">
+      <Filter>gl3w</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gl3w\include\GL\glcorearb.h">
+      <Filter>gl3w</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shader.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="glfw">
       <UniqueIdentifier>{ca942f86-d128-496b-8770-6ef7071299ac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="gl3w">
+      <UniqueIdentifier>{53f3895c-ef50-4557-bf0e-78d91402ecd1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\shader.frag" />
+    <None Include="..\src\shader.vert" />
   </ItemGroup>
 </Project>
