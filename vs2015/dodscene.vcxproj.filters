@@ -8,5 +8,16 @@
     <ClInclude Include="..\src\dos.h" />
     <ClInclude Include="..\src\dos_scene.h" />
     <ClInclude Include="..\src\logger.h" />
+    <ClInclude Include="..\src\glfw\glfw3native.h">
+      <Filter>glfw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\glfw\glfw3.h">
+      <Filter>glfw</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="glfw">
+      <UniqueIdentifier>{ca942f86-d128-496b-8770-6ef7071299ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
