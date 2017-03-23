@@ -140,11 +140,11 @@ int main(int argc, char** argv)
 	glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
 	glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(hmm_vec3), nullptr);
 
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 
 	auto worldMat = HMM_Mat4();
 	worldMat.Elements[0][0] = 1.f; worldMat.Elements[1][1] = 1.f; worldMat.Elements[2][2] = 1.f; worldMat.Elements[3][3] = 1.f;
-	auto viewMat = HMM_LookAt({0, 3, -3}, { 0,0,0 }, { 0,0,1 }); // eye, center, up
+	auto viewMat = HMM_LookAt({0, 1, -7}, { 0,0,0 }, { 0,0,1 }); // eye, center, up
 	auto projMat = HMM_Perspective(60, windowWidth / windowHeight, 1, 100); // float FOV, float AspectRatio, float Near, float Far;
 
 	using ms = std::chrono::duration<float, std::milli>;
@@ -153,6 +153,19 @@ int main(int argc, char** argv)
 	std::chrono::high_resolution_clock timer;
 	
 	time lastFrametime = timer.now();
+
+	Scene scene;
+
+	auto N1 = scene.addTransform();
+	auto N2 = scene.addTransform();
+	auto N3 = scene.addTransform(N1);
+	auto N4 = scene.addTransform(N1);
+	auto N5 = scene.addTransform();
+	auto N6 = scene.addTransform(N3);
+	auto N7 = scene.addTransform(N5);
+	auto N8 = scene.addTransform(N2);
+
+	scene.updateTransform(N1, HMM_Translate(hmm_vec3{ -2.f, 0, 0 }));
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -171,14 +184,24 @@ int main(int argc, char** argv)
 		glUseProgram(progHandle);
 
 		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 0.05f, {0,1,0});
-		worldMat = worldMat * rotMat;
-
-		glUniformMatrix4fv(2, 1, GL_FALSE, (GLfloat*)&worldMat.Elements);
-		glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&viewMat.Elements);
-		glUniformMatrix4fv(4, 1, GL_FALSE, (GLfloat*)&projMat.Elements);
+		/*worldMat = worldMat * rotMat;*/
+		auto root = scene.getRoot();
+  		scene.transforms[root.index].localTransform = scene.transforms[root.index].localTransform * rotMat;
 
 		glBindVertexArray(vao);
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+		glUniform3f(2, 0.f, 1.f, -3.f);
+		//glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&worldMat.Elements);
+		glUniformMatrix4fv(4, 1, GL_FALSE, (GLfloat*)&viewMat.Elements);
+		glUniformMatrix4fv(5, 1, GL_FALSE, (GLfloat*)&projMat.Elements);
+
+		scene.updateWorldTransforms();
+
+		for (size_t i = 0; i < scene.nextFree; ++i)
+		{
+			glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&(scene.transforms[i].worldTransform));
+			glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		}
 
 		glfwSwapBuffers(window);
 
@@ -205,19 +228,6 @@ int main(int argc, char** argv)
 	auto signs = addTransform(scene, road, "signs");
 
 	auto interior = addTransform(scene, chassis, "interior");*/
-
-	Scene scene;
-
-	auto N1 = scene.addTransform();
-	auto N2 = scene.addTransform();
-	auto N3 = scene.addTransform(N1);
-	auto N4 = scene.addTransform(N1);
-	auto N5 = scene.addTransform();
-	auto N6 = scene.addTransform(N3);
-	auto N7 = scene.addTransform(N5);
-	auto N8 = scene.addTransform(N2);
-
-	scene.updateTransform(N1, hmm_mat4());
 
 	return 0;
 }

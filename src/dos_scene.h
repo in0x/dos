@@ -104,6 +104,14 @@ namespace dos
 
 	const int MAX_ENTITIES = /*UINT16_MAX*/ 1000;
 
+	void setEntity(hmm_mat4& mat)
+	{
+		mat.Elements[0][0] = 1;
+		mat.Elements[1][1] = 1;
+		mat.Elements[2][2] = 1;
+		mat.Elements[3][3] = 1;
+	}
+
 	struct Transform	
 	{
 		hmm_mat4 localTransform;
@@ -120,6 +128,9 @@ namespace dos
 					worldTransform.Elements[x][y] = 0.f;
 				}
 			}
+
+			setEntity(localTransform);
+			setEntity(worldTransform);
 		}
 
 	};
@@ -137,8 +148,14 @@ namespace dos
 			: nextFree(0)
 		{
 			transforms[0].isLeaf = false;
-			parents[0] = MAX_ENTITIES; // This is stupid, but I want bad things to happen if we try to look up the root's parent for now.
+			parents[0] = 0; // This is stupid, but I want bad things to happen if we try to look up the root's parent for now.
+			transforms[0].clear();
 			nextFree = 1;
+		}
+
+		TransformID getRoot()
+		{
+			return TransformID{ 0 };
 		}
 
 		TransformID addTransform() // Parent will be root.
@@ -200,9 +217,11 @@ namespace dos
 
 		void updateWorldTransforms()
 		{
+			transforms[0].worldTransform = transforms[0].localTransform;
+
 			for (int i = 1; i < nextFree; ++i)
 			{
-				transforms[i].worldTransform = transforms[i].localTransform * transforms[parents[i]].worldTransform;
+				transforms[i].worldTransform = transforms[parents[i]].worldTransform * transforms[i].localTransform;
 			}
 		}
 
@@ -232,6 +251,10 @@ namespace dos
 				}
 			}
 		}
+
+		// Split up local and world transforms.
+		// Local -> Depth first
+		// World -> ??
 
 		std::array<Transform, MAX_ENTITIES> transforms;
 		std::array<uint16_t, MAX_ENTITIES> parents;
