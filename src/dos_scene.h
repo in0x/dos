@@ -4,8 +4,6 @@
 
 namespace dos
 {
-	const int MAX_ENTITIES = 1000;
-
 	void setEntity(hmm_mat4& mat)
 	{
 		mat.Elements[0][0] = 1;
@@ -27,11 +25,6 @@ namespace dos
 		setEntity(mat);
 	}
 
-	struct TransformID 
-	{
-		int index;
-	};
-
 	// Problem with this approach is that hierarchy gets fragmented.
 	// Parent is guaranteed to always be in front of child due to swap on insert.
 	struct Scene 
@@ -39,6 +32,10 @@ namespace dos
 		Scene()
 			: nextFree(0)
 		{
+			local.resize(MAX_ENTITIES);
+			world.resize(MAX_ENTITIES);
+			parents.resize(MAX_ENTITIES);
+
 			for (int i = 0; i < MAX_ENTITIES; ++i)
 			{
 
@@ -52,6 +49,18 @@ namespace dos
 		TransformID getRoot()
 		{
 			return TransformID{ 0 };
+		}
+
+		void resize(int size)
+		{
+			check(size < MAX_ENTITIES);
+
+			for (int i = 0; i < size; ++i)
+			{
+				clearTransform(i);
+			}
+
+			nextFree = size;
 		}
 
 		void clearTransform(int id)
@@ -145,9 +154,14 @@ namespace dos
 		// Local -> Depth first
 		// World -> ??
 
-		std::array<hmm_mat4, MAX_ENTITIES> local;
-		std::array<hmm_mat4, MAX_ENTITIES> world;
-		std::array<uint16_t, MAX_ENTITIES> parents;
+		//std::array<hmm_mat4, MAX_ENTITIES> local;
+		//std::array<hmm_mat4, MAX_ENTITIES> world;
+		//std::array<uint16_t, MAX_ENTITIES> parents;
+	
+		std::vector<hmm_mat4> local;
+		std::vector<hmm_mat4> world;
+		std::vector<uint16_t> parents;
+		
 		int nextFree;
 	};
 }

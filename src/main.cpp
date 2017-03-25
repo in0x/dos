@@ -1,76 +1,14 @@
 #include "dos.h"
 #include "dos_scene.h"
-#include "shader.h"
+#include "combined_scene.h"
+#include "tree.h"
 
 using namespace dos;
 
-std::vector<hmm_vec3> vertices = {
-	// bottom
-	{0.5f, -0.5f, 0.5f},
-	{-0.5f, -0.5f, 0.5f},
-	{0.5f, -0.5f, -0.5f},
-
-	{-0.5f, -0.5f, -0.5f},
-	{-0.5f, -0.5f, 0.5f},
-	{0.5f, -0.5f, -0.5f},
-
-	// top 
-	{0.5f, 0.5f, 0.5f},
-	{0.5f, 0.5f, -0.5f},
-	{-0.5f, 0.5f, 0.5f},
-
-	{-0.5f, 0.5f, -0.5f},
-	{-0.5f, 0.5f, 0.5f},
-	{0.5f, 0.5f, -0.5f},
-
-	// front
-	{-0.5f, -0.5f, 0.5f},
-	{0.5f, -0.5f, 0.5f},
-	{0.5f, 0.5f, 0.5f},
-
-	{-0.5f, -0.5f, 0.5f},
-	{0.5f, 0.5f, 0.5f},
-	{-0.5f, 0.5f, 0.5f},
-
-	// left
-	{-0.5f, -0.5f,  0.5f},
-	{-0.5f, 0.5f,  0.5f},
-	{-0.5f, -0.5f, -0.5f},
-
-	{-0.5f, -0.5f, -0.5f},
-	{-0.5f, 0.5f,  0.5f},
-	{-0.5f, 0.5f, -0.5f},
-
-	// right
-	{0.5f, -0.5f, 0.5f},
-	{0.5f, -0.5f, -0.5f},
-	{0.5f, 0.5f, -0.5f},
-
-	{0.5f, -0.5f,  0.5f},
-	{0.5f, 0.5f, -0.5f},
-	{0.5f, 0.5f,  0.5f},
-	// back
-	{0.5f, -0.5f, -0.5f},
-	{-0.5f, -0.5f, -0.5f},
-	{-0.5f, 0.5f, -0.5f},
-
-	{0.5f, -0.5f, -0.5f},
-	{-0.5f, 0.5f, -0.5f},
-	{0.5f, 0.5f, -0.5f}
-};
-
-std::vector<hmm_vec3> normals = {
-	{ 0,-1, 0 }, { 0,-1, 0 }, { 0,-1, 0 }, { 0,-1, 0 }, { 0,-1, 0 }, { 0,-1, 0 },
-	{ 0, 1, 0 }, { 0, 1, 0 }, { 0, 1, 0 }, { 0, 1, 0 }, { 0, 1, 0 }, { 0, 1, 0 },
-	{ 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1},
-	{-1, 0, 0 }, {-1, 0, 0 }, {-1, 0, 0 }, {-1, 0, 0 }, {-1, 0, 0 }, {-1, 0, 0 },
-	{ 1, 0, 0 }, { 1, 0, 0 }, { 1, 0, 0 }, { 1, 0, 0 }, { 1, 0, 0 }, { 1, 0, 0 },
-	{ 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}
-};
-
-Scene buildBalancedScene(int levels, int childNodesPerLevel)
+template<class TScene>
+TScene buildBalancedScene(int levels, int childNodesPerLevel)
 {
-	Scene scene;
+	TScene scene;
 
 	std::vector<TransformID> level;
 	level.push_back(scene.getRoot());
@@ -93,172 +31,191 @@ Scene buildBalancedScene(int levels, int childNodesPerLevel)
 	return scene;
 }
 
-#if 0 
-
-int main(int argc, char** argv)
+template<class TScene, class TreeNodeType>
+void buildDepthFirstScene(TScene& outScene, Tree<TreeNodeType>& outTree, int levels, int childNodesPerLevel)
 {
-	if (!glfwInit())
+	std::vector<std::shared_ptr<TreeNodeType>> level;
+	level.push_back(outTree.root);
+
+	for (int i = 0; i < levels; ++i)
 	{
-		printf("Failed to init GLFW\n");
-	}
-	else
-	{
-		printf("Inited GLFW\n");
-	}
+		std::vector<std::shared_ptr<TreeNodeType>> nextLevel;
 
-	int windowWidth = 1280;
-	int windowHeight = 720;
-
-	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "DOS", nullptr, nullptr);
-	if (!window)
-	{
-		printf("Failed to open window\n");
-	}
-
-	glfwMakeContextCurrent(window);
-
-	if (gl3wInit())
-	{
-		printf("Failed to init glew");
-	}
-
-	GLuint vert = createShader("../src/shader.vert", GL_VERTEX_SHADER);
-	GLuint frag = createShader("../src/shader.frag", GL_FRAGMENT_SHADER);
-
-	GLuint progHandle = glCreateProgram();
-
-	glAttachShader(progHandle, vert);
-	glAttachShader(progHandle, frag);
-
-	glLinkProgram(progHandle);
-
-	glDeleteShader(vert);
-	glDeleteShader(frag);
-
-	if (progHandle == 0)
-	{
-		printf("Failed to create program\n");
-	}
-
-	GLuint vbo;
-	GLuint normals_vbo;
-	GLuint vao;
-
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(hmm_vec3) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
-
-	glGenBuffers(1, &normals_vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(hmm_vec3) * normals.size(), normals.data(), GL_STATIC_DRAW);
-
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(hmm_vec3), nullptr);
-
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
-	glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(hmm_vec3), nullptr);
-
-	glEnable(GL_CULL_FACE);
-
-	auto worldMat = HMM_Mat4_Identity();
-	auto viewMat = HMM_LookAt({0, 2, -15}, { 0,0,0 }, { 0,0,1 }); // eye, center, up
-	auto projMat = HMM_Perspective(60, (float)windowWidth / (float)windowHeight, 1, 1000); // float FOV, float AspectRatio, float Near, float Far;
-
-	using ms = std::chrono::duration<float, std::milli>;
-	using time = std::chrono::time_point<std::chrono::steady_clock>;
-
-	std::chrono::high_resolution_clock timer;
-	
-	time lastFrametime = timer.now();
-
-	Scene scene;
-
-	hmm_mat4 offset = HMM_Translate(hmm_vec3{ -2.f, 0, 0 });
-	auto N1 = scene.addTransform(HMM_Translate(hmm_vec3{ -2.f, 2, 0 }));
-	auto N2 = scene.addTransform(offset); 
-	auto N3 = scene.addTransform(N1, offset);
-	auto N4 = scene.addTransform(N1, offset);
-	auto N5 = scene.addTransform(HMM_Translate(hmm_vec3{ -2.f, -2, 0 }));
-	auto N6 = scene.addTransform(N3, offset);
-	auto N7 = scene.addTransform(N5, offset);
-	auto N8 = scene.addTransform(N2, offset);
-
-	while (!glfwWindowShouldClose(window))
-	{
-		auto nowFrameTime = timer.now();
-		auto deltaTime = std::chrono::duration_cast<ms>(nowFrameTime - lastFrametime).count();
-		lastFrametime = nowFrameTime;
-	
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_MULTISAMPLE);
-
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		GLfloat color[] = { 1.f, 1.f, 1.f, 1.f };
-		glClearBufferfv(GL_COLOR, 0, color);
-
-		glUseProgram(progHandle);
-
-		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 0.05f, {0,1,0});
-		/*worldMat = worldMat * rotMat;*/
-		auto root = scene.getRoot();
-  		scene.local[root.index] = scene.local[root.index] * rotMat;
-
-		glBindVertexArray(vao);
-
-		glUniform3f(2, 0.f, 1.f, -3.f);
-		//glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&worldMat.Elements);
-		glUniformMatrix4fv(4, 1, GL_FALSE, (GLfloat*)&viewMat.Elements);
-		glUniformMatrix4fv(5, 1, GL_FALSE, (GLfloat*)&projMat.Elements);
-
-		scene.updateWorldTransforms();
-
-		for (size_t i = 0; i < scene.nextFree; ++i)
+		for (auto& node : level)
 		{
-			glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&(scene.world[i]));
-			glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+			for (int child = 0; child < childNodesPerLevel; ++child)
+			{
+				nextLevel.push_back(outTree.addNode(node));
+			}
 		}
 
-		glfwSwapBuffers(window);
-
-		glDisable(GL_MULTISAMPLE);
-		glDisable(GL_DEPTH_TEST);
-
-		glfwPollEvents();
+		level = nextLevel;
 	}
 
-	glfwDestroyWindow(window);
-	glDeleteProgram(progHandle);
-	glfwTerminate();
-
-	return 0;
+	int numNodes = (std::pow(childNodesPerLevel, levels + 1) - 1) / (childNodesPerLevel - 1);
+	outScene.resize(numNodes);
+	nodeCount = 0;
+	visitDFS(outScene, outTree.root, 0);
 }
 
-#endif
+int nodeCount = 0;
 
+template<class TScene, class TreeNodeType>
+void visitDFS(TScene& scene, std::shared_ptr<TreeNodeType> node, int parentIdx)
+{
+	nodeCount += 1;
+
+	for (auto& child : node->children)
+	{
+		scene.parents[nodeCount] = parentIdx;
+		visitDFS(scene, child, nodeCount);
+	}
+}
 
 int main(int argc, char** argv)
 {
-	Scene scene = buildBalancedScene(5, 3);
+	int levels = 4;
+	int children = 3;
+	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
+	int numTests = 1000;
+
+	check(numNodes < MAX_ENTITIES);
 
 	using ms = std::chrono::duration<float, std::milli>;
 	using time = std::chrono::time_point<std::chrono::steady_clock>;
-
 	std::chrono::high_resolution_clock timer;
+	
+	time start;
+	time end;
 
-	time start = timer.now();
+	// Split test
+	{
+		printf("\n\nSPLIT TEST\n");
 
-	scene.updateWorldTransforms();
+		Scene scene = buildBalancedScene<Scene>(levels, children);
 
-	time end = timer.now();
-	float deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+		float deltaTime = 0.f;
+		float totalRuntime = 0.f;
 
-	printf("Update took: %f ms \n", deltaTime);
+		for (int i = 0; i < numTests; ++i)
+		{
+			start = timer.now();
+
+			scene.updateWorldTransforms();
+
+			end = timer.now();
+			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+			totalRuntime += deltaTime;
+		}
+
+		printf("Number of nodes: %d\n", scene.nextFree);
+		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+	}
+
+	// Combined test
+	{
+		printf("\n\nCombined TEST\n");
+
+		float deltaTime = 0.f;
+		float totalRuntime = 0.f;
+
+		auto combined = buildBalancedScene<hierarchy::combined::Scene>(levels, children);
+
+		for (int i = 0; i < numTests; ++i)
+		{
+			start = timer.now();
+		
+			combined.updateWorldTransforms();
+
+			end = timer.now();
+			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+			totalRuntime += deltaTime;
+		}
+
+		printf("Number of nodes: %d\n", combined.nextFree);
+		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+	}
+
+	// Depth first split test
+	{
+		Scene scene;
+		Tree<TransformNode> tree;
+
+		buildDepthFirstScene(scene, tree, levels, children);
+	
+		float deltaTime = 0.f;
+		float totalRuntime = 0.f;
+
+		printf("\n\nDEPTH FIRST SPLIT TEST\n");
+		
+		for (int i = 0; i < numTests; ++i)
+		{
+			start = timer.now();
+
+			scene.updateWorldTransforms();
+
+			end = timer.now();
+			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+			totalRuntime += deltaTime;
+		}
+
+		printf("Number of nodes: %d\n", scene.nextFree);
+		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+	}
+
+	// Depth first combined test 
+	{
+		hierarchy::combined::Scene scene;
+		Tree<TransformNode> tree;
+
+		buildDepthFirstScene(scene, tree, levels, children);
+
+		printf("\n\nDEPTH First COMBINED TEST\n");
+		
+		float totalRuntime = 0.f;
+		float deltaTime = 0.f;
+
+		for (int i = 0; i < numTests; ++i)
+		{
+			start = timer.now();
+
+			scene.updateWorldTransforms();
+
+			end = timer.now();
+			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+			totalRuntime += deltaTime;
+		}
+
+		printf("Number of nodes: %d\n", scene.nextFree);
+		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+	}
+
+	// Tree Depth First test
+	{
+		Scene scene;
+		Tree<TransformNode> tree;
+
+		buildDepthFirstScene(scene, tree, levels, children);
+
+		printf("\n\nTREE DEPTH FIRST TEST\n");
+
+		float deltaTime = 0.f;
+		float totalRuntime = 0.f;
+
+		for (int i = 0; i < numTests; ++i)
+		{
+			start = timer.now();
+
+			updateWorldTransforms(tree);
+
+			end = timer.now();
+			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+			totalRuntime += deltaTime;
+		}
+
+		printf("Number of nodes: %d\n", scene.nextFree);
+		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+	}
 
 	return 0;
 }

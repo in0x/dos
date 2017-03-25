@@ -38,6 +38,13 @@ hmm_mat4 HMM_Mat4_Identity()
 	return HMM_Mat4d(1.f);
 }
 
+struct TransformID
+{
+	int index;
+};
+
+const uint64_t MAX_ENTITIES = 1'000'000;
+
 // DAG for hierarchy
 // actually, when an entity is removed or added, we update the array representation of the depth first order, otherwise we can reuse the representation
 // process sorted hierarchy to output world transforms

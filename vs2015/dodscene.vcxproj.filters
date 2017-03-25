@@ -5,6 +5,7 @@
     <ClCompile Include="..\src\gl3w\src\gl3w.c">
       <Filter>gl3w</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\glMain.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\HandmadeMath.h" />
@@ -24,6 +25,7 @@
     </ClInclude>
     <ClInclude Include="..\src\shader.h" />
     <ClInclude Include="..\src\tree.h" />
+    <ClInclude Include="..\src\combined_scene.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="glfw">
