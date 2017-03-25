@@ -145,6 +145,7 @@
     <ClInclude Include="..\src\glfw\glfw3native.h" />
     <ClInclude Include="..\src\HandmadeMath.h" />
     <ClInclude Include="..\src\shader.h" />
+    <ClInclude Include="..\src\tree.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\shader.frag" />

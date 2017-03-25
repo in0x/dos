@@ -68,6 +68,33 @@ std::vector<hmm_vec3> normals = {
 	{ 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}, { 0, 0, -1}
 };
 
+Scene buildBalancedScene(int levels, int childNodesPerLevel)
+{
+	Scene scene;
+
+	std::vector<TransformID> level;
+	level.push_back(scene.getRoot());
+
+	for (int i = 0; i < levels; ++i)
+	{
+		std::vector<TransformID> nextLevel;
+
+		for (TransformID id : level)
+		{
+			for (int child = 0; child < childNodesPerLevel; ++child)
+			{
+				nextLevel.push_back(scene.addTransform(id));
+			}
+		}
+
+		level = nextLevel;
+	}
+
+	return scene;
+}
+
+#if 0 
+
 int main(int argc, char** argv)
 {
 	if (!glfwInit())
@@ -151,18 +178,6 @@ int main(int argc, char** argv)
 
 	Scene scene;
 
-	/*
-	auto N1 = scene.addTransform();
-	auto N2 = scene.addTransform();
-	auto N3 = scene.addTransform(N1);
-	auto N4 = scene.addTransform(N1);
-	auto N5 = scene.addTransform();
-	auto N6 = scene.addTransform(N3);
-	auto N7 = scene.addTransform(N5);
-	auto N8 = scene.addTransform(N2);
-	*/
-
-
 	hmm_mat4 offset = HMM_Translate(hmm_vec3{ -2.f, 0, 0 });
 	auto N1 = scene.addTransform(HMM_Translate(hmm_vec3{ -2.f, 2, 0 }));
 	auto N2 = scene.addTransform(offset); 
@@ -172,8 +187,6 @@ int main(int argc, char** argv)
 	auto N6 = scene.addTransform(N3, offset);
 	auto N7 = scene.addTransform(N5, offset);
 	auto N8 = scene.addTransform(N2, offset);
-
-	//scene.updateTransform(N1, HMM_Translate(hmm_vec3{ -2.f, 0, 0 }));
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -194,7 +207,7 @@ int main(int argc, char** argv)
 		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 0.05f, {0,1,0});
 		/*worldMat = worldMat * rotMat;*/
 		auto root = scene.getRoot();
-  		scene.transforms[root.index].localTransform = scene.transforms[root.index].localTransform * rotMat;
+  		scene.local[root.index] = scene.local[root.index] * rotMat;
 
 		glBindVertexArray(vao);
 
@@ -207,7 +220,7 @@ int main(int argc, char** argv)
 
 		for (size_t i = 0; i < scene.nextFree; ++i)
 		{
-			glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&(scene.transforms[i].worldTransform));
+			glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&(scene.world[i]));
 			glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 		}
 
@@ -223,19 +236,29 @@ int main(int argc, char** argv)
 	glDeleteProgram(progHandle);
 	glfwTerminate();
 
-	/*Scene scene;
+	return 0;
+}
 
-	auto root = scene.getRoot();
+#endif
 
-	auto chassis = addTransform(scene, "chassis");
-	auto road = addTransform(scene, "road");
 
-	auto under = addTransform(scene, chassis, "under");
-	auto wheel = addTransform(scene, under, "wheel");
+int main(int argc, char** argv)
+{
+	Scene scene = buildBalancedScene(5, 3);
 
-	auto signs = addTransform(scene, road, "signs");
+	using ms = std::chrono::duration<float, std::milli>;
+	using time = std::chrono::time_point<std::chrono::steady_clock>;
 
-	auto interior = addTransform(scene, chassis, "interior");*/
+	std::chrono::high_resolution_clock timer;
+
+	time start = timer.now();
+
+	scene.updateWorldTransforms();
+
+	time end = timer.now();
+	float deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+
+	printf("Update took: %f ms \n", deltaTime);
 
 	return 0;
 }

@@ -23,6 +23,7 @@
       <Filter>gl3w</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shader.h" />
+    <ClInclude Include="..\src\tree.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="glfw">
