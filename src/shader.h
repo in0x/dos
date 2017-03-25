@@ -16,7 +16,7 @@ void printShaderLog(GLuint shader)
 
 		if (infoLogLength > 0)
 		{
-			std::cout << infoLog << std::endl;
+			std::cout << infoLog << '\n';
 		}
 
 		delete[] infoLog;
@@ -24,7 +24,7 @@ void printShaderLog(GLuint shader)
 
 	else
 	{
-		std::cout << shader << " is not a shader" << std::endl;
+		std::cout << shader << " is not a shader" << '\n';
 	}
 }
 
@@ -55,7 +55,7 @@ GLuint createShader(const std::string& path, GLenum shaderType)
 
 	else
 	{
-		Logger::Error("Failed to load shader");
+		std::cout << "Failed to load shader" << '\n';
 	}
 
 	printShaderLog(shader);

@@ -10,7 +10,6 @@
     <ClInclude Include="..\src\HandmadeMath.h" />
     <ClInclude Include="..\src\dos.h" />
     <ClInclude Include="..\src\dos_scene.h" />
-    <ClInclude Include="..\src\logger.h" />
     <ClInclude Include="..\src\glfw\glfw3native.h">
       <Filter>glfw</Filter>
     </ClInclude>

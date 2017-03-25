@@ -3,8 +3,9 @@
 // PCH
 
 // STL
-#include <string>
+#include <fstream>
 #include <iostream>
+#include <string>
 #include <functional>
 #include <memory>
 #include <numeric>
@@ -14,13 +15,12 @@
 #include <cassert>
 #include <chrono>
 
+#include <stdio.h>
+
 // GL
 
 #include "gl3w/include/GL/gl3w.h"
 #include "glfw/glfw3.h"
-
-// DOS
-#include "logger.h"
 
 // HMM
 #define HANDMADE_MATH_IMPLEMENTATION
@@ -28,7 +28,15 @@
 #define HANDMADE_MATH_NO_INLINE
 #include "HandmadeMath.h"
 
-#define check(expr) if (!(expr)) {Logger::Error("Triggered assertion at" __LOCATION_INFO__); assert(false); }
+#define S1(x) #x
+#define S2(x) S1(x)
+#define __LOCATION_INFO__ "In: " __FILE__ "\nAt: " S2(__LINE__) ", " __FUNCTION__ "\n" 
+#define check(expr) if (!(expr)) {printf("Triggered assertion at" __LOCATION_INFO__); assert(false); }
+
+hmm_mat4 HMM_Mat4_Identity()
+{
+	return HMM_Mat4d(1.f);
+}
 
 // DAG for hierarchy
 // actually, when an entity is removed or added, we update the array representation of the depth first order, otherwise we can reuse the representation

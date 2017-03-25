@@ -2,107 +2,9 @@
 
 #include "dos.h"
 
-#define DEPTH_FIRST 0
-#define UNSORTED 1
-
 namespace dos
 {
-#if DEPTH_FIRST	
-	struct TransformID
-	{
-		int level;
-		int idx;
-		std::string name;
-	};
-
-	bool operator==(const TransformID& lhv, const TransformID& rhv)
-	{
-		return lhv.level == rhv.level && lhv.idx == rhv.idx;
-	}
-
-	bool operator!=(const TransformID& lhv, const TransformID& rhv)
-	{
-		return !(lhv == rhv);
-	}
-
-	struct Transform
-	{
-		hmm_mat4 localTransform;
-		hmm_mat4 worldTransform;
-		
-		TransformID self;
-		TransformID parent;
-	};
-
-	struct Scene
-	{
-		Scene()
-			: hierarchy(2)
-		{
-			Transform root;
-			root.self = { 0,0, "Root" };
-			hierarchy[0].push_back(root);
-		}
-
-		std::vector<std::vector<Transform>> hierarchy;
-
-		TransformID getRoot()
-		{
-			return hierarchy[0][0].self;
-		}
-	};
-
-	TransformID addTransform(Scene& scene, const std::string& name)
-	{
-		Transform newTrafo;
-		newTrafo.parent = scene.getRoot();
-		
-		scene.hierarchy[1].push_back(newTrafo);
-
-		scene.hierarchy[1][scene.hierarchy[1].size() - 1].self = TransformID{ 1, static_cast<int>(scene.hierarchy[1].size()) - 1, name };
-		return scene.hierarchy[1][scene.hierarchy[1].size() - 1].self;
-	}
-
-	TransformID addTransform(Scene& scene, TransformID& parent, const std::string& name)
-	{
-		Transform newTrafo;
-		newTrafo.parent = parent;
-
-		if (parent.level + 1 >= scene.hierarchy.size()) // Add another level if we exceed the current last
-		{
-			scene.hierarchy.push_back({});
-		}
-		
-		auto& level = scene.hierarchy[parent.level + 1];
-		level.push_back(newTrafo);
-		
-		int i;
-		for (i = level.size() - 1; i > 1; i--) // Swap until we are contigous with elements of same parent
-		{
-			if (level[i - 1].parent != level[i].parent) 
-			{
-				std::swap(level[i - 1], level[i]);
-			}
-		}
-
-		level[i].self = TransformID{ parent.level + 1, i, name };
-		return level[i].self;
-	}
-
-	void removeTransform(Scene& scene, TransformID& transform)
-	{
-		auto level = scene.hierarchy[transform.level];
-
-		level.erase(std::remove(level.begin(), level.end(), level[transform.idx]), level.end());
-
-
-	}
-
-#endif // DEPTH_FIRST
-
-#if UNSORTED
-
-	const int MAX_ENTITIES = /*UINT16_MAX*/ 1000;
+	const int MAX_ENTITIES = 1000;
 
 	void setEntity(hmm_mat4& mat)
 	{
@@ -168,6 +70,13 @@ namespace dos
 			return TransformID{ nextFree++ };
 		}
 
+		TransformID addTransform(const hmm_mat4& local)
+		{
+			TransformID trafo = addTransform();
+			transforms[trafo.index].localTransform = local;
+			return trafo;
+		}
+
 		TransformID addTransform(TransformID& parent) // Parent ref not const because order change in array might change index of parent.
 		{
 			check(nextFree < MAX_ENTITIES);
@@ -190,6 +99,13 @@ namespace dos
 			}
 
 			return TransformID{ nextFree++ };
+		}
+
+		TransformID addTransform(TransformID& parent, const hmm_mat4& local)
+		{
+			TransformID trafo = addTransform(parent);
+			transforms[trafo.index].localTransform = local;
+			return trafo;
 		}
 
 		void removeTransform(const TransformID& transform)
@@ -260,7 +176,5 @@ namespace dos
 		std::array<uint16_t, MAX_ENTITIES> parents;
 		int nextFree;
 	};
-
-#endif // UNSORTED
 }
 

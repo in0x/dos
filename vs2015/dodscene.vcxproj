@@ -144,7 +144,6 @@
     <ClInclude Include="..\src\glfw\glfw3.h" />
     <ClInclude Include="..\src\glfw\glfw3native.h" />
     <ClInclude Include="..\src\HandmadeMath.h" />
-    <ClInclude Include="..\src\logger.h" />
     <ClInclude Include="..\src\shader.h" />
   </ItemGroup>
   <ItemGroup>
