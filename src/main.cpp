@@ -31,8 +31,8 @@ TScene buildBalancedScene(int levels, int childNodesPerLevel)
 	return scene;
 }
 
-template<class TScene, class TreeNodeType>
-void buildDepthFirstScene(TScene& outScene, Tree<TreeNodeType>& outTree, int levels, int childNodesPerLevel)
+template<class TreeNodeType>
+void buildBalancedTree(Tree<TreeNodeType>& outTree, int levels, int childNodesPerLevel)
 {
 	std::vector<std::shared_ptr<TreeNodeType>> level;
 	level.push_back(outTree.root);
@@ -51,31 +51,68 @@ void buildDepthFirstScene(TScene& outScene, Tree<TreeNodeType>& outTree, int lev
 
 		level = nextLevel;
 	}
-
-	int numNodes = (std::pow(childNodesPerLevel, levels + 1) - 1) / (childNodesPerLevel - 1);
-	outScene.resize(numNodes);
-	nodeCount = 0;
-	visitDFS(outScene, outTree.root, 0);
 }
 
 int nodeCount = 0;
 
 template<class TScene, class TreeNodeType>
-void visitDFS(TScene& scene, std::shared_ptr<TreeNodeType> node, int parentIdx)
+void buildDepthFirstScene(TScene& outScene, Tree<TreeNodeType>& outTree, int levels, int childNodesPerLevel)
+{
+	buildBalancedTree(outTree, levels, childNodesPerLevel);
+
+	int numNodes = (std::pow(childNodesPerLevel, levels + 1) - 1) / (childNodesPerLevel - 1);
+	outScene.resize(numNodes);
+	nodeCount = 0;
+	visitSceneDF(outScene, outTree.root, 0);
+}
+
+template<class TScene, class TreeNodeType>
+void buildBreadthFirstScene(TScene& outScene, Tree<TreeNodeType>& outTree, int levels, int childNodesPerLevel)
+{
+	buildBalancedTree(outTree, levels, childNodesPerLevel);
+
+	int numNodes = (std::pow(childNodesPerLevel, levels + 1) - 1) / (childNodesPerLevel - 1);
+	outScene.resize(numNodes);
+	nodeCount = 0;
+	visitSceneBF(outScene, outTree.root, 0);
+}
+
+template<class TScene, class TreeNodeType>
+void visitSceneDF(TScene& scene, std::shared_ptr<TreeNodeType> node, int parentIdx)
 {
 	nodeCount += 1;
 
 	for (auto& child : node->children)
 	{
 		scene.parents[nodeCount] = parentIdx;
-		visitDFS(scene, child, nodeCount);
+		visitSceneDF(scene, child, nodeCount);
+	}
+}
+
+template<class TScene, class TreeNodeType>
+void visitSceneBF(TScene& scene, std::shared_ptr<TreeNodeType> node, int parentIdx)
+{
+	for (auto& child : node->children)
+	{
+		nodeCount += 1;
+		scene.parents[nodeCount] = parentIdx;
+	}
+
+	for (auto& child : node->children)
+	{
+		parentIdx += 1;
+		visitSceneBF(scene, child, parentIdx);
 	}
 }
 
 int main(int argc, char** argv)
 {
-	int levels = 4;
+	/*int levels = 4;
+	int children = 3;*/
+
+	int levels = 10;
 	int children = 3;
+
 	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
 	int numTests = 1000;
 
@@ -190,11 +227,66 @@ int main(int argc, char** argv)
 		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
 	}
 
+	// Breadth first split test
+	{
+		Scene scene;
+		Tree<TransformNode> tree;
+
+		buildBreadthFirstScene(scene, tree, levels, children);
+
+		float deltaTime = 0.f;
+		float totalRuntime = 0.f;
+
+		printf("\n\nBREADTH FIRST SPLIT TEST\n");
+
+		for (int i = 0; i < numTests; ++i)
+		{
+			start = timer.now();
+
+			scene.updateWorldTransforms();
+
+			end = timer.now();
+			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+			totalRuntime += deltaTime;
+		}
+
+		printf("Number of nodes: %d\n", scene.nextFree);
+		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+	}
+
+	// Breadth first combined test 
+	{
+		hierarchy::combined::Scene scene;
+		Tree<TransformNode> tree;
+
+		buildBreadthFirstScene(scene, tree, levels, children);
+
+		printf("\n\nBREADTH FIRST COMBINED TEST\n");
+
+		float totalRuntime = 0.f;
+		float deltaTime = 0.f;
+
+		for (int i = 0; i < numTests; ++i)
+		{
+			start = timer.now();
+
+			scene.updateWorldTransforms();
+
+			end = timer.now();
+			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+			totalRuntime += deltaTime;
+		}
+
+		printf("Number of nodes: %d\n", scene.nextFree);
+		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+	}
+
 	// Tree Depth First test
 	{
 		Scene scene;
 		Tree<TransformNode> tree;
 
+		buildBalancedTree(tree, levels, children);
 		buildDepthFirstScene(scene, tree, levels, children);
 
 		printf("\n\nTREE DEPTH FIRST TEST\n");
@@ -206,7 +298,7 @@ int main(int argc, char** argv)
 		{
 			start = timer.now();
 
-			updateWorldTransforms(tree);
+			updateWorldTransformsDFS(tree);
 
 			end = timer.now();
 			deltaTime = std::chrono::duration_cast<ms>(end - start).count();

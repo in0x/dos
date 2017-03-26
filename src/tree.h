@@ -36,18 +36,18 @@ struct TransformNode : public Node
 	std::vector<std::shared_ptr<TransformNode>> children;
 };
 
-void updateTransformsImpl(std::shared_ptr<TransformNode> node, hmm_mat4& parentTransform)
+void updateTransformsImplDFS(std::shared_ptr<TransformNode> node, hmm_mat4& parentTransform)
 {
 	node->worldTransform = node->worldTransform * parentTransform;
 
 	for (auto& child : node->children)
 	{
-		updateTransformsImpl(child, node->worldTransform);
+		updateTransformsImplDFS(child, node->worldTransform);
 	}
 }
 
-void updateWorldTransforms(Tree<TransformNode>& tree)
+void updateWorldTransformsDFS(Tree<TransformNode>& tree)
 {
-	updateTransformsImpl(tree.root, HMM_Mat4_Identity());
+	updateTransformsImplDFS(tree.root, HMM_Mat4_Identity());
 }
 

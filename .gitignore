@@ -15,7 +15,11 @@ tmp
 *.log	
 *.suo
 *.db
+*.exe
+*.obj
 /tmp
 /bin
 vs2015/dodscene.VC.db
 Data/
+vs2015/x64
+vs2015/
