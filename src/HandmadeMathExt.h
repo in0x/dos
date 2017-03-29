@@ -14,6 +14,11 @@ struct hmm_plane
 	hmm_vec3 n;
 	float d;
 
+	hmm_plane()
+		: n(HMM_Vec3(0.f, 0.f,0.f))
+		, d(0.f)
+	{}
+
 	hmm_plane(const hmm_vec3& _n, float _d)
 		: n(_n)
 		, d(_d)
@@ -48,12 +53,10 @@ struct hmm_frustum
 		FS_BOTTOM = 5
 	};
 
-	std::vector<hmm_plane> sides;
+	hmm_plane sides[6];
 
 	hmm_frustum(const hmm_mat4& projMat)
-	{
-		sides.resize(6);
-
+	{	
 		sides[FS_LEFT].n.X = projMat.Elements[3][0] + projMat.Elements[0][0];
 		sides[FS_LEFT].n.Y = projMat.Elements[3][1] + projMat.Elements[0][1];
 		sides[FS_LEFT].n.Z = projMat.Elements[3][2] + projMat.Elements[0][2];
