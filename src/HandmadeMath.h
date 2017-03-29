@@ -1544,7 +1544,7 @@ HMM_LookAt(hmm_vec3 Eye, hmm_vec3 Center, hmm_vec3 Up)
 }
 
 
-HMMDEF hmm_quaternion 
+HINLINE hmm_quaternion
 HMM_Quaternion(float X, float Y, float Z, float W)
 {
     hmm_quaternion Result = {0};
@@ -1775,7 +1775,7 @@ HMM_QuaternionFromAxisAngle(hmm_vec3 Axis, float AngleOfRotation)
 
 #ifdef HANDMADE_MATH_CPP_MODE
 
-HMMDEF float 
+HINLINE float
 HMM_Length(hmm_vec2 A)
 {
     float Result = 0.0f;
@@ -1785,7 +1785,7 @@ HMM_Length(hmm_vec2 A)
     return(Result);
 }
 
-HMMDEF float 
+HINLINE float
 HMM_Length(hmm_vec3 A)
 {
     float Result = 0.0f;
@@ -1795,7 +1795,7 @@ HMM_Length(hmm_vec3 A)
     return(Result);
 }
 
-HMMDEF float 
+HINLINE float
 HMM_Length(hmm_vec4 A)
 {
     float Result = 0.0f;
@@ -2646,6 +2646,193 @@ operator*=(hmm_quaternion &Left, float Right)
 {
     return (Left = Left * Right);
 }
+
+// NOTE(): These aren't fully featured extensions, they have just what I need to implement my tests
+
+HINLINE hmm_mat4 HMM_Mat4_Identity()
+{
+	return HMM_Mat4d(1.f);
+}
+
+HINLINE void HMM_SetEntity(hmm_mat4& mat)
+{
+	mat.Elements[0][0] = 1;
+	mat.Elements[1][1] = 1;
+	mat.Elements[2][2] = 1;
+	mat.Elements[3][3] = 1;
+}
+
+HINLINE void HMM_Clear(hmm_mat4& mat)
+{
+	for (int x = 0; x < 4; ++x)
+	{
+		for (int y = 0; y < 4; ++y)
+		{
+			mat.Elements[x][y] = 0.f;
+		}
+	}
+
+	HMM_SetEntity(mat);
+}
+
+HINLINE hmm_vec3 HMM_MultiplyMat4ByVec3(hmm_mat4 Matrix, hmm_vec3 Vector)
+{
+	hmm_vec3 Result = { 0 };
+
+	int Columns, Rows;
+	for (Rows = 0; Rows < 4; ++Rows)
+	{
+		float Sum = 0;
+		for (Columns = 0; Columns < 3; ++Columns)
+		{
+			Sum += Matrix.Elements[Columns][Rows] * Vector.Elements[Columns];
+		}
+
+		Result.Elements[Rows] = Sum;
+	}
+
+	return (Result);
+}
+
+HINLINE float HMM_Distance(const hmm_vec3& lhv, const hmm_vec3& rhv)
+{
+	return std::sqrt((lhv.X * rhv.X) * (lhv.X * rhv.X) - (lhv.Y * rhv.Y) * (lhv.Y * rhv.Y) - (lhv.Z * rhv.Z) * (lhv.Z * rhv.Z));
+}
+
+struct hmm_plane
+{
+	hmm_vec3 n;
+	float d;
+
+	hmm_plane()
+		: n(HMM_Vec3(0.f, 0.f, 0.f))
+		, d(0.f)
+	{}
+
+	hmm_plane(const hmm_vec3& _n, float _d)
+		: n(_n)
+		, d(_d)
+	{}
+
+	hmm_plane(hmm_vec3& p0, hmm_vec3& p1, hmm_vec3&p2)
+	{
+		hmm_vec3 edge1 = p1 - p0;
+		hmm_vec3  edge2 = p2 - p0;
+
+		n = HMM_Cross(edge1, edge2);
+		HMM_NormalizeVec3(n);
+		d = HMM_DotVec3(n, p0);
+	}
+};
+
+struct hmm_sphere
+{
+	hmm_vec3 center;
+	float radius;
+
+	hmm_sphere()
+		: center(HMM_Vec3(0, 0, 0))
+		, radius(0.f)
+	{}
+
+	hmm_sphere(const hmm_vec3& _center, float _radius)
+		: center(_center)
+		, radius(_radius)
+	{}
+};
+
+HINLINE void HMM_Transform(const hmm_sphere& inSphere, hmm_sphere& outSphere, const hmm_mat4& matrix)
+{
+	hmm_vec3 edge = inSphere.center + HMM_Vec3(1, 0, 0) * inSphere.radius;
+	outSphere.center = HMM_MultiplyMat4ByVec3(matrix, inSphere.center);
+	edge = HMM_MultiplyMat4ByVec3(matrix, edge);
+
+	outSphere.radius = HMM_Distance(inSphere.center, edge);
+}
+
+HINLINE void HMM_Expand(hmm_sphere& toExpand, const hmm_sphere& expandBy)
+{
+	hmm_vec3 newCenter = (expandBy.center + toExpand.center) * 0.5f;
+
+	float newRadiusA = HMM_Distance(newCenter, expandBy.center) + expandBy.radius;
+
+	float newRadiusB = HMM_Distance(newCenter, toExpand.center) + toExpand.radius;
+
+	toExpand.center = newCenter;
+	toExpand.radius = max(newRadiusA, newRadiusB);
+}
+
+struct hmm_frustum
+{
+	enum FrustumSide
+	{
+		FS_NEAR = 0,
+		FS_FAR = 1,
+		FS_LEFT = 2,
+		FS_RIGHT = 3,
+		FS_TOP = 4,
+		FS_BOTTOM = 5
+	};
+
+	hmm_plane sides[6];
+
+	hmm_frustum(const hmm_mat4& projMat)
+	{
+		sides[FS_LEFT].n.X = projMat.Elements[3][0] + projMat.Elements[0][0];
+		sides[FS_LEFT].n.Y = projMat.Elements[3][1] + projMat.Elements[0][1];
+		sides[FS_LEFT].n.Z = projMat.Elements[3][2] + projMat.Elements[0][2];
+		sides[FS_LEFT].d = projMat.Elements[3][3] + projMat.Elements[0][3];
+
+		sides[FS_RIGHT].n.X = projMat.Elements[3][0] - projMat.Elements[0][0];
+		sides[FS_RIGHT].n.Y = projMat.Elements[3][1] - projMat.Elements[0][1];
+		sides[FS_RIGHT].n.Z = projMat.Elements[3][2] - projMat.Elements[0][2];
+		sides[FS_RIGHT].d = projMat.Elements[3][3] - projMat.Elements[0][3];
+
+		sides[FS_TOP].n.X = projMat.Elements[3][0] - projMat.Elements[1][0];
+		sides[FS_TOP].n.Y = projMat.Elements[3][1] - projMat.Elements[1][1];
+		sides[FS_TOP].n.Z = projMat.Elements[3][2] - projMat.Elements[1][2];
+		sides[FS_TOP].d = projMat.Elements[3][3] - projMat.Elements[1][3];
+
+		sides[FS_BOTTOM].n.X = projMat.Elements[3][0] + projMat.Elements[1][0];
+		sides[FS_BOTTOM].n.Y = projMat.Elements[3][1] + projMat.Elements[1][1];
+		sides[FS_BOTTOM].n.Z = projMat.Elements[3][2] + projMat.Elements[1][2];
+		sides[FS_BOTTOM].d = projMat.Elements[3][3] + projMat.Elements[1][3];
+
+		sides[FS_NEAR].n.X = projMat.Elements[3][0] + projMat.Elements[2][0];
+		sides[FS_NEAR].n.Y = projMat.Elements[3][1] + projMat.Elements[2][1];
+		sides[FS_NEAR].n.Z = projMat.Elements[3][2] + projMat.Elements[2][2];
+		sides[FS_NEAR].d = projMat.Elements[3][3] + projMat.Elements[2][3];
+
+		sides[FS_FAR].n.X = projMat.Elements[3][0] - projMat.Elements[2][0];
+		sides[FS_FAR].n.Y = projMat.Elements[3][1] - projMat.Elements[2][1];
+		sides[FS_FAR].n.Z = projMat.Elements[3][2] - projMat.Elements[2][2];
+		sides[FS_FAR].d = projMat.Elements[3][3] - projMat.Elements[2][3];
+
+		for (size_t i = 0; i < 6; ++i)
+		{
+			float length = HMM_LengthVec3(sides[i].n);
+			sides[i].n = HMM_NormalizeVec3(sides[i].n);
+			sides[i].d /= -length;
+		}
+	}
+};
+
+HINLINE bool HMM_Intersects(const hmm_frustum& frustum, const hmm_sphere& sphere)
+{
+	hmm_vec3 center = sphere.center;
+	float radius = sphere.radius;
+
+	for (auto& plane : frustum.sides)
+	{
+		float dist = HMM_DotVec3(center, plane.n) - plane.d;
+
+		if (dist < -radius)
+			return false;
+	}
+
+	return true;
+}
+
 
 #endif /* HANDMADE_MATH_CPP_MODE */
 

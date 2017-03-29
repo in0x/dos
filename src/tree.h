@@ -1,53 +1,44 @@
 #pragma once
-#include "dos.h"
 
-struct Node
+#include <memory>
+
+struct TransformNode
 {
-	std::vector<std::shared_ptr<Node>> children;
-};
-
-template<class NodeType>
-struct Tree
-{
-	Tree()
-	{
-		root = std::make_shared<NodeType>();
-	}
-
-	std::shared_ptr<NodeType> addNode(std::shared_ptr<NodeType> parent)
-	{
-		auto node = std::make_shared<NodeType>();
-		parent->children.push_back(node);
-		return node;
-	}
-
-	std::shared_ptr<NodeType> root;
-};
-
-struct TransformNode : public Node
-{
-	TransformNode()
+	TransformNode::TransformNode()
 		: localTransform(HMM_Mat4_Identity())
 		, worldTransform(HMM_Mat4_Identity())
+		, localBounds()
+		, worldBounds()
+		, children()
+		, bVisible(true)
 	{}
 
 	hmm_mat4 localTransform;
 	hmm_mat4 worldTransform;
+	hmm_sphere localBounds;
+	hmm_sphere worldBounds;
 	std::vector<std::shared_ptr<TransformNode>> children;
+	bool bVisible;
 };
 
-void updateTransformsImplDFS(std::shared_ptr<TransformNode> node, hmm_mat4& parentTransform)
+class SceneTree
 {
-	node->worldTransform = node->worldTransform * parentTransform;
+public:
 
-	for (auto& child : node->children)
-	{
-		updateTransformsImplDFS(child, node->worldTransform);
-	}
-}
+	SceneTree();
 
-void updateWorldTransformsDFS(Tree<TransformNode>& tree)
-{
-	updateTransformsImplDFS(tree.root, HMM_Mat4_Identity());
-}
+	std::shared_ptr<TransformNode> addNode(std::shared_ptr<TransformNode> parent);
+	void updateWorldTransformsDFS();
+	void cullSceneTree(const hmm_frustum& frustum);
+	void cullSceneTreeHierarchical(const hmm_frustum& frustum);
+	void renderTree();
+	std::shared_ptr<TransformNode> root;
+
+private:
+	void renderNode(std::shared_ptr<TransformNode> node);
+	void updateWorldTransformNode(std::shared_ptr<TransformNode> node, const hmm_mat4& parentTransform);
+	void cullNode(std::shared_ptr<TransformNode> node, const hmm_mat4& parentTransform, const hmm_frustum& frustum);
+	void cullNodeHierarchical(std::shared_ptr<TransformNode> node, const hmm_mat4& parentTransform, const hmm_frustum& frustum);
+};
+
 

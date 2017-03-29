@@ -6,11 +6,12 @@
       <Filter>gl3w</Filter>
     </ClCompile>
     <ClCompile Include="..\src\glMain.h" />
+    <ClCompile Include="..\src\scene.cpp" />
+    <ClCompile Include="..\src\tree.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\HandmadeMath.h" />
     <ClInclude Include="..\src\dos.h" />
-    <ClInclude Include="..\src\dos_scene.h" />
     <ClInclude Include="..\src\glfw\glfw3native.h">
       <Filter>glfw</Filter>
     </ClInclude>
@@ -25,7 +26,7 @@
     </ClInclude>
     <ClInclude Include="..\src\shader.h" />
     <ClInclude Include="..\src\tree.h" />
-    <ClInclude Include="..\src\HandmadeMathExt.h" />
+    <ClInclude Include="..\src\scene.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="glfw">

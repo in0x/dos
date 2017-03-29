@@ -25,9 +25,8 @@
 // HMM
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_CPP_MODE
-#define HANDMADE_MATH_NO_INLINE
-#include "HandmadeMathExt.h"
-
+//#define HANDMADE_MATH_NO_INLINE
+#include "HandmadeMath.h"
 
 #define S1(x) #x
 #define S2(x) S1(x)
