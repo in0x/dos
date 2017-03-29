@@ -31,6 +31,29 @@ TScene buildBalancedScene(int levels, int childNodesPerLevel)
 	return scene;
 }
 
+template<class TScene>
+TScene buildDegenWideScene(int children)
+{
+	TScene scene;
+
+	for (int i = 0; i < children; ++i)
+	{
+		scene.AddTransform();
+	}
+}
+
+template<class TScene>
+TScene buildDegenDeepScene(int children)
+{
+	TScene scene;
+	TransformID last = scene.getRoot();
+
+	for (int i = 0; i < children; ++i)
+	{
+		last = scene.AddTransform(last);
+	}
+}
+
 template<class TreeNodeType>
 void buildBalancedTree(Tree<TreeNodeType>& outTree, int levels, int childNodesPerLevel)
 {
@@ -105,11 +128,36 @@ void visitSceneBF(TScene& scene, std::shared_ptr<TreeNodeType> node, int parentI
 	}
 }
 
+template<class TScene>
+void TestScene(TScene& scene, int numTests)
+{
+	using ms = std::chrono::duration<float, std::milli>;
+	using time = std::chrono::time_point<std::chrono::steady_clock>;
+	std::chrono::high_resolution_clock timer;
+
+	time start;
+	time end;
+
+	float deltaTime = 0.f;
+	float totalRuntime = 0.f;
+
+	for (int i = 0; i < numTests; ++i)
+	{
+		start = timer.now();
+
+		scene.updateWorldTransforms();
+
+		end = timer.now();
+		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+		totalRuntime += deltaTime;
+	}
+
+	printf("Number of nodes: %d\n", scene.nextFree);
+	printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+}
+
 int main(int argc, char** argv)
 {
-	/*int levels = 4;
-	int children = 3;*/
-
 	int levels = 10;
 	int children = 3;
 
@@ -118,171 +166,77 @@ int main(int argc, char** argv)
 
 	check(numNodes < MAX_ENTITIES);
 
-	using ms = std::chrono::duration<float, std::milli>;
-	using time = std::chrono::time_point<std::chrono::steady_clock>;
-	std::chrono::high_resolution_clock timer;
-	
-	time start;
-	time end;
-
 	// Split test
 	{
 		printf("\n\nSPLIT TEST\n");
 
 		Scene scene = buildBalancedScene<Scene>(levels, children);
 
-		float deltaTime = 0.f;
-		float totalRuntime = 0.f;
-
-		for (int i = 0; i < numTests; ++i)
-		{
-			start = timer.now();
-
-			scene.updateWorldTransforms();
-
-			end = timer.now();
-			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-			totalRuntime += deltaTime;
-		}
-
-		printf("Number of nodes: %d\n", scene.nextFree);
-		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+		TestScene(scene, numTests);
 	}
 
 	// Combined test
 	{
 		printf("\n\nCombined TEST\n");
 
-		float deltaTime = 0.f;
-		float totalRuntime = 0.f;
-
 		auto combined = buildBalancedScene<hierarchy::combined::Scene>(levels, children);
 
-		for (int i = 0; i < numTests; ++i)
-		{
-			start = timer.now();
-		
-			combined.updateWorldTransforms();
-
-			end = timer.now();
-			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-			totalRuntime += deltaTime;
-		}
-
-		printf("Number of nodes: %d\n", combined.nextFree);
-		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+		TestScene(combined, numTests);
 	}
 
 	// Depth first split test
 	{
+		printf("\n\nDEPTH FIRST SPLIT TEST\n");
+
 		Scene scene;
 		Tree<TransformNode> tree;
 
 		buildDepthFirstScene(scene, tree, levels, children);
-	
-		float deltaTime = 0.f;
-		float totalRuntime = 0.f;
-
-		printf("\n\nDEPTH FIRST SPLIT TEST\n");
-		
-		for (int i = 0; i < numTests; ++i)
-		{
-			start = timer.now();
-
-			scene.updateWorldTransforms();
-
-			end = timer.now();
-			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-			totalRuntime += deltaTime;
-		}
-
-		printf("Number of nodes: %d\n", scene.nextFree);
-		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+		TestScene(scene, numTests);
 	}
 
 	// Depth first combined test 
 	{
+		printf("\n\nDEPTH First COMBINED TEST\n");
+
 		hierarchy::combined::Scene scene;
 		Tree<TransformNode> tree;
 
 		buildDepthFirstScene(scene, tree, levels, children);
-
-		printf("\n\nDEPTH First COMBINED TEST\n");
-		
-		float totalRuntime = 0.f;
-		float deltaTime = 0.f;
-
-		for (int i = 0; i < numTests; ++i)
-		{
-			start = timer.now();
-
-			scene.updateWorldTransforms();
-
-			end = timer.now();
-			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-			totalRuntime += deltaTime;
-		}
-
-		printf("Number of nodes: %d\n", scene.nextFree);
-		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+		TestScene(scene, numTests);
 	}
 
 	// Breadth first split test
 	{
+		printf("\n\nBREADTH FIRST SPLIT TEST\n");
+
 		Scene scene;
 		Tree<TransformNode> tree;
 
 		buildBreadthFirstScene(scene, tree, levels, children);
-
-		float deltaTime = 0.f;
-		float totalRuntime = 0.f;
-
-		printf("\n\nBREADTH FIRST SPLIT TEST\n");
-
-		for (int i = 0; i < numTests; ++i)
-		{
-			start = timer.now();
-
-			scene.updateWorldTransforms();
-
-			end = timer.now();
-			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-			totalRuntime += deltaTime;
-		}
-
-		printf("Number of nodes: %d\n", scene.nextFree);
-		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+		TestScene(scene, numTests);
 	}
 
 	// Breadth first combined test 
 	{
+		printf("\n\nBREADTH FIRST COMBINED TEST\n");
+
 		hierarchy::combined::Scene scene;
 		Tree<TransformNode> tree;
 
 		buildBreadthFirstScene(scene, tree, levels, children);
-
-		printf("\n\nBREADTH FIRST COMBINED TEST\n");
-
-		float totalRuntime = 0.f;
-		float deltaTime = 0.f;
-
-		for (int i = 0; i < numTests; ++i)
-		{
-			start = timer.now();
-
-			scene.updateWorldTransforms();
-
-			end = timer.now();
-			deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-			totalRuntime += deltaTime;
-		}
-
-		printf("Number of nodes: %d\n", scene.nextFree);
-		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+		TestScene(scene, numTests);
 	}
 
 	// Tree Depth First test
 	{
+		using ms = std::chrono::duration<float, std::milli>;
+		using time = std::chrono::time_point<std::chrono::steady_clock>;
+		std::chrono::high_resolution_clock timer;
+
+		time start;
+		time end;
+
 		Scene scene;
 		Tree<TransformNode> tree;
 
