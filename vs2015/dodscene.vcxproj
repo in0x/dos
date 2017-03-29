@@ -146,7 +146,6 @@
     <ClCompile Include="..\src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\combined_scene.h" />
     <ClInclude Include="..\src\dos.h" />
     <ClInclude Include="..\src\dos_scene.h" />
     <ClInclude Include="..\src\gl3w\include\GL\gl3w.h" />

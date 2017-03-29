@@ -34,12 +34,6 @@
 #define __LOCATION_INFO__ "In: " __FILE__ "\nAt: " S2(__LINE__) ", " __FUNCTION__ "\n" 
 #define check(expr) if (!(expr)) {printf("Triggered assertion at" __LOCATION_INFO__); assert(false); }
 
-
-struct TransformID
-{
-	int index;
-};
-
 const uint64_t MAX_ENTITIES = 1'000'000;
 
 // DAG for hierarchy

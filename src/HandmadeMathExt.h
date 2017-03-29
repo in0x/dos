@@ -9,6 +9,27 @@ hmm_mat4 HMM_Mat4_Identity()
 	return HMM_Mat4d(1.f);
 }
 
+void HMM_SetEntity(hmm_mat4& mat)
+{
+	mat.Elements[0][0] = 1;
+	mat.Elements[1][1] = 1;
+	mat.Elements[2][2] = 1;
+	mat.Elements[3][3] = 1;
+}
+
+void HMM_Clear(hmm_mat4& mat)
+{
+	for (int x = 0; x < 4; ++x)
+	{
+		for (int y = 0; y < 4; ++y)
+		{
+			mat.Elements[x][y] = 0.f;
+		}
+	}
+
+	HMM_SetEntity(mat);
+}
+
 struct hmm_plane
 {
 	hmm_vec3 n;

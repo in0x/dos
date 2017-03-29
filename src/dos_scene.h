@@ -4,29 +4,11 @@
 
 namespace dos
 {
-	void setEntity(hmm_mat4& mat)
+	struct TransformID
 	{
-		mat.Elements[0][0] = 1;
-		mat.Elements[1][1] = 1;
-		mat.Elements[2][2] = 1;
-		mat.Elements[3][3] = 1;
-	}
+		int index;
+	};
 
-	void clear(hmm_mat4& mat)
-	{
-		for (int x = 0; x < 4; ++x)
-		{
-			for (int y = 0; y < 4; ++y)
-			{
-				mat.Elements[x][y] = 0.f;
-			}
-		}
-
-		setEntity(mat);
-	}
-
-	// Problem with this approach is that hierarchy gets fragmented.
-	// Parent is guaranteed to always be in front of child due to swap on insert.
 	struct Scene 
 	{
 		Scene()
@@ -65,8 +47,8 @@ namespace dos
 
 		void clearTransform(int id)
 		{
-			clear(local[nextFree]);
-			clear(world[nextFree]);
+			HMM_Clear(local[nextFree]);
+			HMM_Clear(world[nextFree]);
 		}
 
 		TransformID addTransform() // Parent will be root.
@@ -150,14 +132,6 @@ namespace dos
 
 		}
 
-		// Split up local and world transforms.
-		// Local -> Depth first
-		// World -> ??
-
-		//std::array<hmm_mat4, MAX_ENTITIES> local;
-		//std::array<hmm_mat4, MAX_ENTITIES> world;
-		//std::array<uint16_t, MAX_ENTITIES> parents;
-	
 		std::vector<hmm_mat4> local;
 		std::vector<hmm_mat4> world;
 		std::vector<uint16_t> parents;
