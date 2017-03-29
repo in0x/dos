@@ -130,5 +130,18 @@ void Scene::render()
 
 void Scene::buildFromSceneTree(const SceneTree& tree)
 {
+	resize(tree.numNodes);
+	int nodeCount = 0;
+	visitSceneDF(tree.root, 0, nodeCount);
+}
 
+void Scene::visitSceneDF(std::shared_ptr<TransformNode> node, int parentIdx, int& nodeCount)
+{
+	nodeCount += 1;
+
+	for (auto& child : node->children)
+	{
+		parents[nodeCount] = parentIdx;
+		visitSceneDF(child, nodeCount, nodeCount);
+	}
 }

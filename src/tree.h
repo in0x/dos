@@ -33,6 +33,7 @@ public:
 	void cullSceneTreeHierarchical(const hmm_frustum& frustum);
 	void renderTree();
 	std::shared_ptr<TransformNode> root;
+	int numNodes;
 
 private:
 	void renderNode(std::shared_ptr<TransformNode> node);

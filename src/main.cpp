@@ -50,26 +50,6 @@ Scene buildBalancedScene(int levels, int childNodesPerLevel)
 
 int nodeCount = 0;
 
-void visitSceneDF(Scene& scene, std::shared_ptr<TransformNode> node, int parentIdx)
-{
-	nodeCount += 1;
-
-	for (auto& child : node->children)
-	{
-		scene.parents[nodeCount] = parentIdx;
-		visitSceneDF(scene, child, nodeCount);
-	}
-}
-
-void buildDepthFirstScene(Scene& outScene, SceneTree& outTree, int levels, int childNodesPerLevel)
-{
-	buildBalancedTree(outTree, levels, childNodesPerLevel);
-
-	int numNodes = (std::pow(childNodesPerLevel, levels + 1) - 1) / (childNodesPerLevel - 1);
-	outScene.resize(numNodes);
-	nodeCount = 0;
-	visitSceneDF(outScene, outTree.root, 0);
-}
 
 int main(int argc, char** argv)
 {
@@ -101,14 +81,14 @@ int main(int argc, char** argv)
 	Scene scene;
 	SceneTree tree;
 
-	buildDepthFirstScene(scene, tree, levels, children);
+	buildBalancedTree(tree,levels, children);
+	scene.buildFromSceneTree(tree);
 
 	for (int i = 0; i < numTests; ++i)
 	{
 		start = timer.now();
 
 		scene.updateWorldTransforms();
-		//scene.cullScene(frustum);
 		scene.cullSceneHierarchical(frustum);
 		scene.render();
 
@@ -135,7 +115,6 @@ int main(int argc, char** argv)
 		start = timer.now();
 
 		transformTree.updateWorldTransformsDFS();
-		//transformTree.cullSceneTree(frustum);
 		transformTree.cullSceneTreeHierarchical(frustum);
 		transformTree.renderTree();
 

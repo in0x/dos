@@ -2,6 +2,7 @@
 
 #include <vector>
 
+struct TransformNode;
 class SceneTree;
 
 struct TransformID
@@ -27,6 +28,7 @@ public:
 	void buildFromSceneTree(const SceneTree& tree);
 	void cullSceneHierarchical(const hmm_frustum& frustum);
 	void updateTransform(const TransformID& transform, const hmm_mat4& newLocal);
+	void visitSceneDF(std::shared_ptr<TransformNode> node, int parentIdx, int& nodeCount);
 
 	std::vector<hmm_mat4> local;
 	std::vector<hmm_mat4> world;

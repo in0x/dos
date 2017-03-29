@@ -2,6 +2,7 @@
 #include "tree.h"
 
 SceneTree::SceneTree()
+	: numNodes(0)
 {
 	root = std::make_shared<TransformNode>();
 }
@@ -10,6 +11,7 @@ std::shared_ptr<TransformNode> SceneTree::addNode(std::shared_ptr<TransformNode>
 {
 	auto node = std::make_shared<TransformNode>();
 	parent->children.push_back(node);
+	numNodes++;
 	return node;
 }
 
