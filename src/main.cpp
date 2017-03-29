@@ -238,8 +238,7 @@ int main(int argc, char** argv)
 		Tree<TransformNode> tree;
 
 		buildBalancedTree(tree, levels, children);
-		buildDepthFirstScene(scene, tree, levels, children);
-
+		
 		printf("\n\nTREE DEPTH FIRST TEST\n");
 
 		float deltaTime = 0.f;
@@ -256,7 +255,7 @@ int main(int argc, char** argv)
 			totalRuntime += deltaTime;
 		}
 
-		printf("Number of nodes: %d\n", scene.nextFree);
+		printf("Number of nodes: %d\n", numNodes);
 		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
 	}
 
