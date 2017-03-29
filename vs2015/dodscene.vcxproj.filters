@@ -26,6 +26,7 @@
     <ClInclude Include="..\src\shader.h" />
     <ClInclude Include="..\src\tree.h" />
     <ClInclude Include="..\src\combined_scene.h" />
+    <ClInclude Include="..\src\HandmadeMathExt.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="glfw">

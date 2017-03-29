@@ -26,17 +26,14 @@
 #define HANDMADE_MATH_IMPLEMENTATION
 #define HANDMADE_MATH_CPP_MODE
 #define HANDMADE_MATH_NO_INLINE
-#include "HandmadeMath.h"
+#include "HandmadeMathExt.h"
+
 
 #define S1(x) #x
 #define S2(x) S1(x)
 #define __LOCATION_INFO__ "In: " __FILE__ "\nAt: " S2(__LINE__) ", " __FUNCTION__ "\n" 
 #define check(expr) if (!(expr)) {printf("Triggered assertion at" __LOCATION_INFO__); assert(false); }
 
-hmm_mat4 HMM_Mat4_Identity()
-{
-	return HMM_Mat4d(1.f);
-}
 
 struct TransformID
 {
