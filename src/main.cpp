@@ -32,25 +32,22 @@ TScene buildBalancedScene(int levels, int childNodesPerLevel)
 }
 
 template<class TScene>
-TScene buildDegenWideScene(int children)
+void buildDegenWideScene(TScene& scene, int children)
 {
-	TScene scene;
-
 	for (int i = 0; i < children; ++i)
 	{
-		scene.AddTransform();
+		scene.addTransform();
 	}
 }
 
 template<class TScene>
-TScene buildDegenDeepScene(int children)
+void buildDegenDeepScene(TScene& scene, int children)
 {
-	TScene scene;
 	TransformID last = scene.getRoot();
 
 	for (int i = 0; i < children; ++i)
 	{
-		last = scene.AddTransform(last);
+		last = scene.addTransform(last);
 	}
 }
 
@@ -261,6 +258,43 @@ int main(int argc, char** argv)
 
 		printf("Number of nodes: %d\n", scene.nextFree);
 		printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+	}
+
+
+	// Degenerate Wide Split Test
+	{
+		printf("\n\nDEGEN WIDE SPLIT TEST\n");
+
+		Scene scene;
+		buildDegenWideScene(scene, numNodes);
+		TestScene(scene, numTests);
+	}
+
+	// Degenerate Wide Combined Test
+	{
+		printf("\n\nDEGEN WIDE COMBINED TEST\n");
+
+		hierarchy::combined::Scene scene;
+		buildDegenWideScene(scene, numNodes);
+		TestScene(scene, numTests);
+	}
+
+	// Degenerate Deep Split Test
+	{
+		printf("\n\nDEGEN DEEP SPLIT TEST\n");
+
+		Scene scene;
+		buildDegenDeepScene(scene, numNodes);
+		TestScene(scene, numTests);
+	}
+
+	// Degenerate DEEP Combined Test
+	{
+		printf("\n\nDEGEN DEEP COMBINED TEST\n");
+
+		hierarchy::combined::Scene scene;
+		buildDegenDeepScene(scene, numNodes);
+		TestScene(scene, numTests);
 	}
 
 	return 0;
