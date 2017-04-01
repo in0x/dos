@@ -21,8 +21,8 @@ public:
 
 	void render();
 	void resize(int size);
+	void resetNode(int idx);
 	void updateWorldBounds();
-	void clearTransform(int id);
 	void updateWorldTransforms();
 	void cullScene(const hmm_frustum& frustum);
 	void buildFromSceneTree(const SceneTree& tree);

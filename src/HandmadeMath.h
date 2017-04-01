@@ -2675,15 +2675,14 @@ HINLINE void HMM_Clear(hmm_mat4& mat)
 	HMM_SetEntity(mat);
 }
 
-HINLINE hmm_vec3 HMM_MultiplyMat4ByVec3(hmm_mat4 Matrix, hmm_vec3 Vector)
+HINLINE hmm_vec3 HMM_MultiplyMat4ByVec3(const hmm_mat4& Matrix, const hmm_vec3& Vector)
 {
 	hmm_vec3 Result = { 0 };
 
-	int Columns, Rows;
-	for (Rows = 0; Rows < 4; ++Rows)
+	for (int Rows = 0; Rows < 3; ++Rows)
 	{
 		float Sum = 0;
-		for (Columns = 0; Columns < 3; ++Columns)
+		for (int Columns = 0; Columns < 3; ++Columns)
 		{
 			Sum += Matrix.Elements[Columns][Rows] * Vector.Elements[Columns];
 		}

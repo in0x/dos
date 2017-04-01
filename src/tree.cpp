@@ -2,7 +2,7 @@
 #include "tree.h"
 
 SceneTree::SceneTree()
-	: numNodes(0)
+	: numNodes(1)
 {
 	root = std::make_shared<TransformNode>();
 }

@@ -1,11 +1,16 @@
 #include "dos.h"
 #include "scene.h"
 #include "tree.h"
+#include "shader.h"
 
-void buildBalancedTree(SceneTree& outTree, int levels, int childNodesPerLevel)
+//TODO(Phil): sphere needs vec4 center, otherwise we dont have translations
+
+SceneTree buildBalancedTree(int levels, int childNodesPerLevel)
 {
+	SceneTree tree;
+
 	std::vector<std::shared_ptr<TransformNode>> level;
-	level.push_back(outTree.root);
+	level.push_back(tree.root);
 
 	for (int i = 0; i < levels; ++i)
 	{
@@ -15,128 +20,233 @@ void buildBalancedTree(SceneTree& outTree, int levels, int childNodesPerLevel)
 		{
 			for (int child = 0; child < childNodesPerLevel; ++child)
 			{
-				nextLevel.push_back(outTree.addNode(node));
-			}
-		}
-
-		level = nextLevel;
-	}
-}
-
-Scene buildBalancedScene(int levels, int childNodesPerLevel)
-{
-	Scene scene;
-
-	std::vector<TransformID> level;
-	level.push_back(scene.getRoot());
-
-	for (int i = 0; i < levels; ++i)
-	{
-		std::vector<TransformID> nextLevel;
-
-		for (TransformID id : level)
-		{
-			for (int child = 0; child < childNodesPerLevel; ++child)
-			{
-				nextLevel.push_back(scene.addTransform());
+				nextLevel.push_back(tree.addNode(node));
 			}
 		}
 
 		level = nextLevel;
 	}
 
-	return scene;
+	return tree;
 }
-
-int nodeCount = 0;
-
 
 int main(int argc, char** argv)
 {
-	int levels = 5;
-	int children = 8;
+	if (!glfwInit())
+	{
+		printf("Failed to init GLFW\n");
+	}
+	else
+	{
+		printf("Inited GLFW\n");
+	}
 
-	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
-	int numTests = 100;
+	int windowWidth = 1280;
+	int windowHeight = 720;
 
-	printf("Numnodes: %i", numNodes);
-	check(numNodes < MAX_ENTITIES);
+	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "DOS", nullptr, nullptr);
+	if (!window)
+	{
+		printf("Failed to open window\n");
+	}
 
-	hmm_mat4 projMat = HMM_Perspective(60, 1280.f / 720.f, 1, 100); 
-	hmm_frustum frustum(projMat);
+	glfwMakeContextCurrent(window);
 
-	// Split test
-	printf("\n\nSPLIT DF TEST\n");
+	if (gl3wInit())
+	{
+		printf("Failed to init glew");
+	}
+
+	GLuint vert = createShader("../src/shader.vert", GL_VERTEX_SHADER);
+	GLuint frag = createShader("../src/shader.frag", GL_FRAGMENT_SHADER);
+
+	GLuint progHandle = glCreateProgram();
+
+	glAttachShader(progHandle, vert);
+	glAttachShader(progHandle, frag);
+
+	glLinkProgram(progHandle);
+
+	glDeleteShader(vert);
+	glDeleteShader(frag);
+
+	if (progHandle == 0)
+	{
+		printf("Failed to create program\n");
+	}
+
+	GLuint vbo;
+	GLuint normals_vbo;
+	GLuint vao;
+
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(hmm_vec3) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &normals_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(hmm_vec3) * normals.size(), normals.data(), GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(hmm_vec3), nullptr);
+
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
+	glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(hmm_vec3), nullptr);
+
+	glEnable(GL_CULL_FACE);
+
+	auto worldMat = HMM_Mat4_Identity();
+	auto viewMat = HMM_LookAt({ 0, 2, -15 }, { 0,0,0 }, { 0,0,1 }); // eye, center, up
+	auto projMat = HMM_Perspective(60, (float)windowWidth / (float)windowHeight, 1, 1000); // float FOV, float AspectRatio, float Near, float Far;
 
 	using ms = std::chrono::duration<float, std::milli>;
 	using time = std::chrono::time_point<std::chrono::steady_clock>;
+
 	std::chrono::high_resolution_clock timer;
 
-	time start;
-	time end;
+	time lastFrametime = timer.now();
 
-	float deltaTime = 0.f;
-	float totalRuntime = 0.f;
-
+	SceneTree tree = buildBalancedTree(2, 2);
 	Scene scene;
-	SceneTree tree;
-
-	buildBalancedTree(tree,levels, children);
 	scene.buildFromSceneTree(tree);
 
-	for (int i = 0; i < numTests; ++i)
+	hmm_frustum frustum(projMat);
+
+	while (!glfwWindowShouldClose(window))
 	{
-		start = timer.now();
+		auto nowFrameTime = timer.now();
+		auto deltaTime = std::chrono::duration_cast<ms>(nowFrameTime - lastFrametime).count();
+		lastFrametime = nowFrameTime;
+
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_MULTISAMPLE);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		GLfloat color[] = { 1.f, 1.f, 1.f, 1.f };
+		glClearBufferfv(GL_COLOR, 0, color);
+
+		glUseProgram(progHandle);
+
+		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 0.05f, { 0,1,0 });
+		/*worldMat = worldMat * rotMat;*/
+		auto root = scene.getRoot();
+		scene.local[root.index] = scene.local[root.index] * rotMat;
+
+		glBindVertexArray(vao);
+
+		glUniform3f(2, 0.f, 1.f, -3.f);
+		//glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&worldMat.Elements);
+		glUniformMatrix4fv(4, 1, GL_FALSE, (GLfloat*)&viewMat.Elements);
+		glUniformMatrix4fv(5, 1, GL_FALSE, (GLfloat*)&projMat.Elements);
 
 		scene.updateWorldTransforms();
-		scene.cullSceneHierarchical(frustum);
-		scene.render();
+		scene.cullScene(frustum);
 
-		end = timer.now();
-		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-		totalRuntime += deltaTime;
+		for (size_t i = 0; i < scene.nextFree; ++i)
+		{
+			//if (scene.bVisible[i])
+			{
+				glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&(scene.world[i]));
+				glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+			}
+		}
+
+		glfwSwapBuffers(window);
+
+		glDisable(GL_MULTISAMPLE);
+		glDisable(GL_DEPTH_TEST);
+
+		glfwPollEvents();
 	}
 
-	printf("Number of nodes: %d\n", scene.nextFree);
-	printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
-	
-	// Tree Depth First test
-	SceneTree transformTree;
-
-	buildBalancedTree(transformTree, levels, children);
-
-	printf("\n\nTREE DEPTH FIRST TEST\n");
-
-	deltaTime = 0.f;
-	totalRuntime = 0.f;
-
-	for (int i = 0; i < numTests; ++i)
-	{
-		start = timer.now();
-
-		transformTree.updateWorldTransformsDFS();
-		transformTree.cullSceneTreeHierarchical(frustum);
-		transformTree.renderTree();
-
-		end = timer.now();
-		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-		totalRuntime += deltaTime;
-	}
-
-	printf("Number of nodes: %d\n", numNodes);
-	printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);	
+	glfwDestroyWindow(window);
+	glDeleteProgram(progHandle);
+	glfwTerminate();
 
 	return 0;
 }
 
-/*
-If we use Depth First Order, im pretty sure i can easily do hierarchical culling aswell, the algorithm would be as follows
 
-If not in bounding volume
-	- Remember current parent value
-	- Keep iterating until parent value smaller than current value is encountered
-	- This has to be a new subtree since down a subtree the parent index always has to increase when DFS
-
-This becomes even easier with a fixed number of children since you just have to jump to the next complete offset
-
-*/
+//int main(int argc, char** argv)
+//{
+//	int levels = 5;
+//	int children = 8;
+//
+//	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
+//	int numTests = 100;
+//
+//	printf("Numnodes: %i", numNodes);
+//	check(numNodes < MAX_ENTITIES);
+//
+//	hmm_mat4 projMat = HMM_Perspective(60, 1280.f / 720.f, 1, 100); 
+//	hmm_frustum frustum(projMat);
+//
+//	// Split test
+//	printf("\n\nSPLIT DF TEST\n");
+//
+//	using ms = std::chrono::duration<float, std::milli>;
+//	using time = std::chrono::time_point<std::chrono::steady_clock>;
+//	std::chrono::high_resolution_clock timer;
+//
+//	time start;
+//	time end;
+//
+//	float deltaTime = 0.f;
+//	float totalRuntime = 0.f;
+//
+//	Scene scene;
+//	SceneTree tree;
+//
+//	buildBalancedTree(tree,levels, children);
+//	scene.buildFromSceneTree(tree);
+//
+//	for (int i = 0; i < numTests; ++i)
+//	{
+//		start = timer.now();
+//
+//		scene.updateWorldTransforms();
+//		scene.cullSceneHierarchical(frustum);
+//		scene.render();
+//
+//		end = timer.now();
+//		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+//		totalRuntime += deltaTime;
+//	}
+//
+//	printf("Number of nodes: %d\n", scene.nextFree);
+//	printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
+//	
+//	// Tree Depth First test
+//	SceneTree transformTree;
+//
+//	buildBalancedTree(transformTree, levels, children);
+//
+//	printf("\n\nTREE DEPTH FIRST TEST\n");
+//
+//	deltaTime = 0.f;
+//	totalRuntime = 0.f;
+//
+//	for (int i = 0; i < numTests; ++i)
+//	{
+//		start = timer.now();
+//
+//		transformTree.updateWorldTransformsDFS();
+//		transformTree.cullSceneTreeHierarchical(frustum);
+//		transformTree.renderTree();
+//
+//		end = timer.now();
+//		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+//		totalRuntime += deltaTime;
+//	}
+//
+//	printf("Number of nodes: %d\n", numNodes);
+//	printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);	
+//
+//	return 0;
+//}

@@ -14,8 +14,7 @@ Scene::Scene()
 
 	for (int i = 0; i < MAX_ENTITIES; ++i)
 	{
-
-		clearTransform(i);
+		resetNode(i);
 	}
 
 	parents[0] = 0;
@@ -33,25 +32,31 @@ void Scene::resize(int size)
 
 	for (int i = 0; i < size; ++i)
 	{
-		clearTransform(i);
+		resetNode(i);
 	}
 
 	nextFree = size;
 }
 
-void Scene::clearTransform(int id)
+void Scene::resetNode(int idx)
 {
-	HMM_Clear(local[nextFree]);
-	HMM_Clear(world[nextFree]);
+	HMM_Clear(local[idx]);
+	HMM_Clear(world[idx]);
+	parents[idx] = 0;
+
+	localBounds[idx].center = HMM_Vec3(0.f, 0.f, 0.f);
+	localBounds[idx].radius = 1.f;
+
+	localBounds[idx].center = HMM_Vec3(0.f, 0.f, 0.f);
+	localBounds[idx].radius = 0.f;
+
+	bVisible[idx] = false;
 }
 
 TransformID Scene::addTransform()
 {
 	check(nextFree < MAX_ENTITIES);
-
-	clearTransform(nextFree);
-	parents[nextFree] = 0;
-
+	resetNode(nextFree);
 	return TransformID{ nextFree++ };
 }
 
@@ -135,13 +140,27 @@ void Scene::buildFromSceneTree(const SceneTree& tree)
 	visitSceneDF(tree.root, 0, nodeCount);
 }
 
+const float NODE_OFFSET_X = 1.0f;
+const float NODE_OFFSET_Y = 1.5f;
+
 void Scene::visitSceneDF(std::shared_ptr<TransformNode> node, int parentIdx, int& nodeCount)
 {
 	nodeCount += 1;
 
+	float childCount = static_cast<float>(node->children.size());
+	float columnHalfWidth = (childCount * NODE_OFFSET_X) / 2.0f;
+	childCount--;
+	float localIdx = 0;
+	
 	for (auto& child : node->children)
 	{
+		resetNode(nodeCount);		
 		parents[nodeCount] = parentIdx;
+		
+		float xOffset = HMM_Lerp(-columnHalfWidth, localIdx / childCount, columnHalfWidth);
+		local[nodeCount] = HMM_Translate(HMM_Vec3(local[parentIdx].Elements[3][0] + xOffset, -NODE_OFFSET_Y, 0.f));
+		localIdx++;
+
 		visitSceneDF(child, nodeCount, nodeCount);
 	}
 }
