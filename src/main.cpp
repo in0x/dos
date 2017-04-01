@@ -115,8 +115,8 @@ int main(int argc, char** argv)
 		auto root = scene.getRoot();
 		scene.local[root.index] = transMat;
 
-		int randomIdx = rand() % scene.nextFree;
-		scene.local[randomIdx] = scene.local[randomIdx] * rotMat;
+		//int randomIdx = rand() % scene.nextFree;
+		scene.local[4] = scene.local[4] * rotMat;
 
 		glBindVertexArray(vao);
 		glUniform3f(2, 0.f, 1.f, -3.f);
@@ -125,16 +125,19 @@ int main(int argc, char** argv)
 
 		scene.updateWorldTransforms();
 		scene.updateWorldBounds();
-		scene.cullScene(frustum);
+		scene.cullSceneHierarchical(frustum);
 
+		int nodesDrawn = 0;
 		for (size_t i = 0; i < scene.nextFree; ++i)
 		{
 			if (scene.bVisible[i])
 			{
 				glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&(scene.world[i]));
 				glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+				nodesDrawn++;
 			}
 		}
+		printf("Nodes sent to render: %d\n", nodesDrawn);
 
 		glfwSwapBuffers(window);
 
