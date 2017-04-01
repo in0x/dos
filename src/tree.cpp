@@ -84,5 +84,28 @@ void SceneTree::renderNode(std::shared_ptr<TransformNode> node)
 	}
 }
 
+SceneTree SceneTree::buildBalancedTree(int levels, int childNodesPerLevel)
+{
+	SceneTree tree;
 
+	std::vector<std::shared_ptr<TransformNode>> level;
+	level.push_back(tree.root);
+
+	for (int i = 0; i < levels; ++i)
+	{
+		std::vector<std::shared_ptr<TransformNode>> nextLevel;
+
+		for (auto& node : level)
+		{
+			for (int child = 0; child < childNodesPerLevel; ++child)
+			{
+				nextLevel.push_back(tree.addNode(node));
+			}
+		}
+
+		level = nextLevel;
+	}
+
+	return tree;
+}
 

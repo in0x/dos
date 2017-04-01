@@ -32,6 +32,8 @@ public:
 	void cullSceneTree(const hmm_frustum& frustum);
 	void cullSceneTreeHierarchical(const hmm_frustum& frustum);
 	void renderTree();
+	static SceneTree buildBalancedTree(int levels, int childNodesPerLevel);
+		
 	std::shared_ptr<TransformNode> root;
 	int numNodes;
 

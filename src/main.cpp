@@ -5,31 +5,6 @@
 
 //TODO(Phil): sphere needs vec4 center, otherwise we dont have translations
 
-SceneTree buildBalancedTree(int levels, int childNodesPerLevel)
-{
-	SceneTree tree;
-
-	std::vector<std::shared_ptr<TransformNode>> level;
-	level.push_back(tree.root);
-
-	for (int i = 0; i < levels; ++i)
-	{
-		std::vector<std::shared_ptr<TransformNode>> nextLevel;
-
-		for (auto& node : level)
-		{
-			for (int child = 0; child < childNodesPerLevel; ++child)
-			{
-				nextLevel.push_back(tree.addNode(node));
-			}
-		}
-
-		level = nextLevel;
-	}
-
-	return tree;
-}
-
 int main(int argc, char** argv)
 {
 	if (!glfwInit())
@@ -111,7 +86,7 @@ int main(int argc, char** argv)
 
 	time lastFrametime = timer.now();
 
-	SceneTree tree = buildBalancedTree(2, 2);
+	SceneTree tree = SceneTree::buildBalancedTree(2, 2);
 	Scene scene;
 	scene.buildFromSceneTree(tree);
 
