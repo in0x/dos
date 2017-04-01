@@ -76,8 +76,8 @@ int main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 
 	auto worldMat = HMM_Mat4_Identity();
-	auto viewMat = HMM_LookAt({ 0, 2, -30 }, { 0,0,0 }, { 0,0,1 }); // eye, center, up
-	auto projMat = HMM_Perspective(60, (float)windowWidth / (float)windowHeight, 1, 1000); // float FOV, float AspectRatio, float Near, float Far;
+	auto viewMat = HMM_LookAt({ 0, 2, -20 }, { 0,0,0 }, { 0,0,1 }); // eye, center, up
+	auto projMat = HMM_Perspective(20, (float)windowWidth / (float)windowHeight, 1, 1000); // float FOV, float AspectRatio, float Near, float Far;
 
 	using ms = std::chrono::duration<float, std::milli>;
 	using time_t = std::chrono::time_point<std::chrono::steady_clock>;
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 	Scene scene;
 	scene.buildFromSceneTree(tree);
 
-	hmm_frustum frustum(projMat);
+	hmm_frustum frustum(projMat, viewMat);
 
 	float totalTime = 0.f;
 	srand(time(0));
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 
 		scene.updateWorldTransforms();
 		scene.updateWorldBounds();
-		scene.cullSceneHierarchical(frustum);
+		scene.cullScene(frustum);
 
 		int nodesDrawn = 0;
 		for (size_t i = 0; i < scene.nextFree; ++i)

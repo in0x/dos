@@ -47,8 +47,8 @@ void Scene::resetNode(int idx)
 	localBounds[idx].center = HMM_Vec4(0.f, 0.f, 0.f, 1.f);
 	localBounds[idx].radius = 1.f;
 
-	localBounds[idx].center = HMM_Vec4(0.f, 0.f, 0.f, 1.f);
-	localBounds[idx].radius = 0.f;
+	worldBounds[idx].center = HMM_Vec4(0.f, 0.f, 0.f, 1.f);
+	worldBounds[idx].radius = 0.f;
 
 	bVisible[idx] = false;
 }
