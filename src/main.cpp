@@ -76,15 +76,15 @@ int main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 
 	auto worldMat = HMM_Mat4_Identity();
-	auto viewMat = HMM_LookAt({ 0, 2, -15 }, { 0,0,0 }, { 0,0,1 }); // eye, center, up
+	auto viewMat = HMM_LookAt({ 0, 2, -30 }, { 0,0,0 }, { 0,0,1 }); // eye, center, up
 	auto projMat = HMM_Perspective(60, (float)windowWidth / (float)windowHeight, 1, 1000); // float FOV, float AspectRatio, float Near, float Far;
 
 	using ms = std::chrono::duration<float, std::milli>;
-	using time = std::chrono::time_point<std::chrono::steady_clock>;
+	using time_t = std::chrono::time_point<std::chrono::steady_clock>;
 
 	std::chrono::high_resolution_clock timer;
 
-	time lastFrametime = timer.now();
+	time_t lastFrametime = timer.now();
 
 	SceneTree tree = SceneTree::buildBalancedTree(2, 2);
 	Scene scene;
@@ -92,31 +92,34 @@ int main(int argc, char** argv)
 
 	hmm_frustum frustum(projMat);
 
+	float totalTime = 0.f;
+	srand(time(0));
+
 	while (!glfwWindowShouldClose(window))
 	{
 		auto nowFrameTime = timer.now();
-		auto deltaTime = std::chrono::duration_cast<ms>(nowFrameTime - lastFrametime).count();
+		auto deltaTime = std::chrono::duration_cast<ms>(nowFrameTime - lastFrametime).count() / 1000.f;
 		lastFrametime = nowFrameTime;
+		totalTime += deltaTime;
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_MULTISAMPLE);
-
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		GLfloat color[] = { 1.f, 1.f, 1.f, 1.f };
 		glClearBufferfv(GL_COLOR, 0, color);
-
 		glUseProgram(progHandle);
 
-		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 0.05f, { 0,1,0 });
-		/*worldMat = worldMat * rotMat;*/
+		hmm_mat4 transMat = HMM_Translate(HMM_Vec3(HMM_SinF(totalTime), 0, 0));
+		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 100.f, { 0,1,0 });
+
 		auto root = scene.getRoot();
-		scene.local[root.index] = scene.local[root.index] * rotMat;
+		scene.local[root.index] = transMat;
+
+		int randomIdx = rand() % scene.nextFree;
+		scene.local[randomIdx] = scene.local[randomIdx] * rotMat;
 
 		glBindVertexArray(vao);
-
 		glUniform3f(2, 0.f, 1.f, -3.f);
-		//glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&worldMat.Elements);
 		glUniformMatrix4fv(4, 1, GL_FALSE, (GLfloat*)&viewMat.Elements);
 		glUniformMatrix4fv(5, 1, GL_FALSE, (GLfloat*)&projMat.Elements);
 
