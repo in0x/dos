@@ -2698,6 +2698,11 @@ HINLINE float HMM_Distance(const hmm_vec3& lhv, const hmm_vec3& rhv)
 	return std::sqrt((lhv.X * rhv.X) * (lhv.X * rhv.X) - (lhv.Y * rhv.Y) * (lhv.Y * rhv.Y) - (lhv.Z * rhv.Z) * (lhv.Z * rhv.Z));
 }
 
+HINLINE float HMM_Distance(const hmm_vec4& lhv, const hmm_vec4& rhv)
+{
+	return std::sqrt((lhv.X * rhv.X) * (lhv.X * rhv.X) - (lhv.Y * rhv.Y) * (lhv.Y * rhv.Y) - (lhv.Z * rhv.Z) * (lhv.Z * rhv.Z) - (lhv.W * rhv.W));
+}
+
 struct hmm_plane
 {
 	hmm_vec3 n;
@@ -2726,15 +2731,15 @@ struct hmm_plane
 
 struct hmm_sphere
 {
-	hmm_vec3 center;
+	hmm_vec4 center;
 	float radius;
 
 	hmm_sphere()
-		: center(HMM_Vec3(0, 0, 0))
+		: center(HMM_Vec4(0.f, 0.f, 0.f, 1.f))
 		, radius(0.f)
 	{}
 
-	hmm_sphere(const hmm_vec3& _center, float _radius)
+	hmm_sphere(const hmm_vec4& _center, float _radius)
 		: center(_center)
 		, radius(_radius)
 	{}
@@ -2742,16 +2747,16 @@ struct hmm_sphere
 
 HINLINE void HMM_Transform(const hmm_sphere& inSphere, hmm_sphere& outSphere, const hmm_mat4& matrix)
 {
-	hmm_vec3 edge = inSphere.center + HMM_Vec3(1, 0, 0) * inSphere.radius;
-	outSphere.center = HMM_MultiplyMat4ByVec3(matrix, inSphere.center);
-	edge = HMM_MultiplyMat4ByVec3(matrix, edge);
+	hmm_vec4 edge = inSphere.center + HMM_Vec4(1.f, 0.f, 0.f, 0.f) * inSphere.radius;
+	outSphere.center = HMM_MultiplyMat4ByVec4(matrix, inSphere.center);
+	edge = HMM_MultiplyMat4ByVec4(matrix, edge);
 
 	outSphere.radius = HMM_Distance(inSphere.center, edge);
 }
 
 HINLINE void HMM_Expand(hmm_sphere& toExpand, const hmm_sphere& expandBy)
 {
-	hmm_vec3 newCenter = (expandBy.center + toExpand.center) * 0.5f;
+	hmm_vec4 newCenter = (expandBy.center + toExpand.center) * 0.5f;
 
 	float newRadiusA = HMM_Distance(newCenter, expandBy.center) + expandBy.radius;
 
@@ -2818,12 +2823,12 @@ struct hmm_frustum
 
 HINLINE bool HMM_Intersects(const hmm_frustum& frustum, const hmm_sphere& sphere)
 {
-	hmm_vec3 center = sphere.center;
+	hmm_vec4 center = sphere.center;
 	float radius = sphere.radius;
 
 	for (auto& plane : frustum.sides)
 	{
-		float dist = HMM_DotVec3(center, plane.n) - plane.d;
+		float dist = HMM_DotVec4(center, HMM_Vec4(plane.n.X, plane.n.Y, plane.n.Z, 0.f)) - plane.d;
 
 		if (dist < -radius)
 			return false;

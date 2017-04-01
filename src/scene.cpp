@@ -44,10 +44,10 @@ void Scene::resetNode(int idx)
 	HMM_Clear(world[idx]);
 	parents[idx] = 0;
 
-	localBounds[idx].center = HMM_Vec3(0.f, 0.f, 0.f);
+	localBounds[idx].center = HMM_Vec4(0.f, 0.f, 0.f, 1.f);
 	localBounds[idx].radius = 1.f;
 
-	localBounds[idx].center = HMM_Vec3(0.f, 0.f, 0.f);
+	localBounds[idx].center = HMM_Vec4(0.f, 0.f, 0.f, 1.f);
 	localBounds[idx].radius = 0.f;
 
 	bVisible[idx] = false;
@@ -80,7 +80,7 @@ void Scene::updateWorldTransforms()
 
 void Scene::updateWorldBounds()
 {
-	for (int i = 1; i < nextFree; ++i)
+	for (int i = 0; i < nextFree; ++i)
 	{
 		HMM_Transform(localBounds[i], worldBounds[i], world[i]);
 		HMM_Expand(worldBounds[parents[i]], worldBounds[i]);
@@ -143,7 +143,8 @@ void Scene::buildFromSceneTree(const SceneTree& tree)
 const float NODE_OFFSET_X = 1.0f;
 const float NODE_OFFSET_Y = 1.5f;
 
-void Scene::visitSceneDF(std::shared_ptr<TransformNode> node, int parentIdx, int& nodeCount)
+// This is all garbled up because I built node placement right since I don't care about doing it manually
+void Scene::visitSceneDF(std::shared_ptr<TransformNode> node, int parentIdx, int& nodeCount) 
 {
 	nodeCount += 1;
 

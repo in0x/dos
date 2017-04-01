@@ -121,11 +121,12 @@ int main(int argc, char** argv)
 		glUniformMatrix4fv(5, 1, GL_FALSE, (GLfloat*)&projMat.Elements);
 
 		scene.updateWorldTransforms();
+		scene.updateWorldBounds();
 		scene.cullScene(frustum);
 
 		for (size_t i = 0; i < scene.nextFree; ++i)
 		{
-			//if (scene.bVisible[i])
+			if (scene.bVisible[i])
 			{
 				glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&(scene.world[i]));
 				glDrawArrays(GL_TRIANGLES, 0, vertices.size());
