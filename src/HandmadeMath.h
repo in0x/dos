@@ -2767,6 +2767,7 @@ HINLINE void HMM_Expand(hmm_sphere& toExpand, const hmm_sphere& expandBy)
 	toExpand.center = newCenter;
 	toExpand.radius = max(newRadiusA, newRadiusB);
 }
+
 HINLINE void HMM_Normalize(hmm_plane& outPlane)
 {
 	float invNLen = 1.f / HMM_LengthVec3(outPlane.n);
@@ -2790,47 +2791,42 @@ struct hmm_frustum
 
 	hmm_frustum(const hmm_mat4& projMat, const hmm_mat4& viewMat)
 	{
-		const hmm_mat4 vp = viewMat * projMat;
+		hmm_mat4 vp = projMat * viewMat;
+	
+		// 0 4 8  12
+		// 1 5 9  13
+		// 2 6 10 14
+		// 3 7 11 14
 
-		//  0  1  2  3
-		//  4  5  6  7
-		//  8  9 10 11
-		// 12 13 14 15
+		sides[FS_LEFT].n.X = vp.Elements[3][0] + vp.Elements[0][0];
+		sides[FS_LEFT].n.Y = vp.Elements[3][1] + vp.Elements[0][1];
+		sides[FS_LEFT].n.Z = vp.Elements[3][2] + vp.Elements[0][2];
+		sides[FS_LEFT].d =   vp.Elements[3][3] + vp.Elements[0][3]; 
 
-		sides[FS_LEFT].n.X = vp.Elements[0][3] + vp.Elements[0][0];
-		sides[FS_LEFT].n.Y = vp.Elements[1][3] + vp.Elements[1][0];
-		sides[FS_LEFT].n.Z = vp.Elements[2][3] + vp.Elements[2][0];
-		sides[FS_LEFT].d =   vp.Elements[3][3] + vp.Elements[3][0];
+		sides[FS_RIGHT].n.X = vp.Elements[3][0] - vp.Elements[0][0];
+		sides[FS_RIGHT].n.Y = vp.Elements[3][1] - vp.Elements[0][1];
+		sides[FS_RIGHT].n.Z = vp.Elements[3][2] - vp.Elements[0][2];
+		sides[FS_RIGHT].d =   vp.Elements[3][3] - vp.Elements[0][3]; 
 
-		sides[FS_RIGHT].n.X = vp.Elements[0][3] - vp.Elements[0][0];
-		sides[FS_RIGHT].n.Y = vp.Elements[1][3] - vp.Elements[1][1];
-		sides[FS_RIGHT].n.Z = vp.Elements[2][3] - vp.Elements[2][0];
-		sides[FS_RIGHT].d =   vp.Elements[3][3] - vp.Elements[3][0];
+		sides[FS_BOTTOM].n.X = vp.Elements[3][0] + vp.Elements[1][0];
+		sides[FS_BOTTOM].n.Y = vp.Elements[3][1] + vp.Elements[1][1];
+		sides[FS_BOTTOM].n.Z = vp.Elements[3][2] + vp.Elements[1][2];
+		sides[FS_BOTTOM].d =   vp.Elements[3][3] + vp.Elements[1][3]; 
 
-		sides[FS_BOTTOM].n.X = vp.Elements[0][3] + vp.Elements[0][1];
-		sides[FS_BOTTOM].n.Y = vp.Elements[1][3] + vp.Elements[1][1];
-		sides[FS_BOTTOM].n.Z = vp.Elements[2][3] + vp.Elements[2][1];
-		sides[FS_BOTTOM].d =   vp.Elements[3][3] + vp.Elements[3][1];
+		sides[FS_TOP].n.X = vp.Elements[3][0] - vp.Elements[1][0];
+		sides[FS_TOP].n.Y = vp.Elements[3][1] - vp.Elements[1][1];
+		sides[FS_TOP].n.Z = vp.Elements[3][2] - vp.Elements[1][2];
+		sides[FS_TOP].d =   vp.Elements[3][3] - vp.Elements[1][3];
 
-		sides[FS_TOP].n.X = vp.Elements[0][3] - vp.Elements[0][1];
-		sides[FS_TOP].n.Y = vp.Elements[1][3] - vp.Elements[1][1];
-		sides[FS_TOP].n.Z = vp.Elements[2][3] - vp.Elements[2][1];
-		sides[FS_TOP].d =   vp.Elements[3][3] - vp.Elements[3][1];
+		sides[FS_NEAR].n.X = vp.Elements[3][0] + vp.Elements[2][0];
+		sides[FS_NEAR].n.Y = vp.Elements[3][1] + vp.Elements[2][1];
+		sides[FS_NEAR].n.Z = vp.Elements[3][2] + vp.Elements[2][2];
+		sides[FS_NEAR].d =   vp.Elements[3][3] + vp.Elements[2][3];
 
-		sides[FS_NEAR].n.X = vp.Elements[0][3] + vp.Elements[0][2];
-		sides[FS_NEAR].n.Y = vp.Elements[1][3] + vp.Elements[1][2];
-		sides[FS_NEAR].n.Z = vp.Elements[2][3] + vp.Elements[2][2];
-		sides[FS_NEAR].d =   vp.Elements[3][3] + vp.Elements[3][2];
-
-		sides[FS_FAR].n.X = vp.Elements[0][3] - vp.Elements[0][2];
-		sides[FS_FAR].n.Y = vp.Elements[1][3] - vp.Elements[1][2];
-		sides[FS_FAR].n.Z = vp.Elements[2][3] - vp.Elements[2][2];
-		sides[FS_FAR].d =   vp.Elements[3][3] - vp.Elements[3][2];
-
-		for (int i = 0; i < 6; ++i)
-		{
-			HMM_Normalize(sides[i]);
-		}
+		sides[FS_FAR].n.X = vp.Elements[3][0] - vp.Elements[2][0];
+		sides[FS_FAR].n.Y = vp.Elements[3][1] - vp.Elements[2][1];
+		sides[FS_FAR].n.Z = vp.Elements[3][2] - vp.Elements[2][2];
+		sides[FS_FAR].d =   vp.Elements[3][3] - vp.Elements[2][3];
 	}
 };
 
@@ -2839,19 +2835,18 @@ HINLINE bool HMM_Intersects(const hmm_frustum& frustum, const hmm_sphere& sphere
 	hmm_vec4 center = sphere.center;
 	float radius = sphere.radius;
 
-	for (auto& plane : frustum.sides)
+	for (size_t i = 0; i < 6; ++i)
 	{
-		//float dist = HMM_DotVec4(center, HMM_Vec4(plane.n.X, plane.n.Y, plane.n.Z, 0.f)) - plane.d;
-		float dist = HMM_DotVec3(center.XYZ, plane.n) - plane.d;
+		float dist = HMM_DotVec3(center.XYZ, frustum.sides[i].n) - frustum.sides[i].d;
 
-		if (dist < -radius)
+		if (dist > -radius)
+		{
 			return false;
+		}
 	}
 
 	return true;
 }
 
-
 #endif /* HANDMADE_MATH_CPP_MODE */
-
 #endif /* HANDMADE_MATH_IMPLEMENTATION */

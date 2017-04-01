@@ -76,8 +76,8 @@ int main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 
 	auto worldMat = HMM_Mat4_Identity();
-	auto viewMat = HMM_LookAt({ 0, 2, -20 }, { 0,0,0 }, { 0,0,1 }); // eye, center, up
-	auto projMat = HMM_Perspective(20, (float)windowWidth / (float)windowHeight, 1, 1000); // float FOV, float AspectRatio, float Near, float Far;
+	auto viewMat = HMM_LookAt({ 0, 0, -30 }, { 0,0,0 }, { 0,1,0 }); // eye, center, up
+	auto projMat = HMM_Perspective(60, (float)windowWidth / (float)windowHeight, 1, 100); // float FOV, float AspectRatio, float Near, float Far;
 
 	using ms = std::chrono::duration<float, std::milli>;
 	using time_t = std::chrono::time_point<std::chrono::steady_clock>;
@@ -109,14 +109,14 @@ int main(int argc, char** argv)
 		glClearBufferfv(GL_COLOR, 0, color);
 		glUseProgram(progHandle);
 
-		hmm_mat4 transMat = HMM_Translate(HMM_Vec3(HMM_SinF(totalTime), 0, 0));
+		hmm_mat4 transMat = HMM_Translate(HMM_Vec3(0, HMM_SinF(totalTime), 0));
 		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 100.f, { 0,1,0 });
 
 		auto root = scene.getRoot();
 		scene.local[root.index] = transMat;
 
 		//int randomIdx = rand() % scene.nextFree;
-		scene.local[4] = scene.local[4] * rotMat;
+		//scene.local[4] = scene.local[4] * rotMat;
 
 		glBindVertexArray(vao);
 		glUniform3f(2, 0.f, 1.f, -3.f);
@@ -125,7 +125,8 @@ int main(int argc, char** argv)
 
 		scene.updateWorldTransforms();
 		scene.updateWorldBounds();
-		scene.cullScene(frustum);
+		//scene.cullScene(frustum);
+		scene.cullSceneHierarchical(frustum);
 
 		int nodesDrawn = 0;
 		for (size_t i = 0; i < scene.nextFree; ++i)
