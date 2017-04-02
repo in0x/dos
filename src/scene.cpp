@@ -74,7 +74,6 @@ void Scene::updateWorldTransforms()
 	for (int i = 1; i < nextFree; ++i)
 	{
 		world[i] = world[parents[i]] * local[i];
-		HMM_Transform(localBounds[i], worldBounds[i], world[i]);
 	}
 }
 
