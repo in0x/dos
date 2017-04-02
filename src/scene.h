@@ -10,9 +10,8 @@ struct TransformID
 	int index;
 };
 
-class Scene 
+struct Scene 
 {
-public:
 	Scene();
 
 	TransformID getRoot();

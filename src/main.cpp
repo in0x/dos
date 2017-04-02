@@ -156,8 +156,8 @@
 
 int main(int argc, char** argv)
 {
-	int levels = 5;
-	int children = 8;
+	int levels = 6;
+	int children = 6;
 
 	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
 	int numTests = 100;

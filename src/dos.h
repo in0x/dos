@@ -33,7 +33,7 @@
 #define __LOCATION_INFO__ "In: " __FILE__ "\nAt: " S2(__LINE__) ", " __FUNCTION__ "\n" 
 #define check(expr) if (!(expr)) {printf("Triggered assertion at" __LOCATION_INFO__); assert(false); }
 
-const uint64_t MAX_ENTITIES = 1'000'000;
+const uint64_t MAX_ENTITIES = UINT16_MAX;
 
 // DAG for hierarchy
 // actually, when an entity is removed or added, we update the array representation of the depth first order, otherwise we can reuse the representation
