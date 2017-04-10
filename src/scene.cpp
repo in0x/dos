@@ -96,21 +96,24 @@ void Scene::cullScene(const hmm_frustum& frustum)
 
 void Scene::cullSceneHierarchical(const hmm_frustum& frustum)
 {
-	for (int i = 0; i < nextFree; ++i)
+	for (int i = 0; i < nextFree;)
 	{
 		bVisible[i] = HMM_Intersects(frustum, worldBounds[i]);
 
 		if (!bVisible[i])
 		{
-			int nextSubTree = i;
-			int currentParent = parents[i];
-			while (nextSubTree < nextFree && parents[nextSubTree] >= currentParent)
+			int current = i;
+			int nextSubTree = i + 1;
+			while (nextSubTree < nextFree && parents[nextSubTree] > parents[current])
 			{
-				// Since we are in depth first order, our children follow us. 
-				// We can find the next non-child by looking at the next node's parent
-				// since nodes in the same subtree will only have a parentIdx larger than us.
+				bVisible[nextSubTree] = false;
 				nextSubTree++;
 			}
+			i = nextSubTree;
+		}
+		else
+		{
+			i++;
 		}
 	}
 }
@@ -119,17 +122,6 @@ void Scene::updateTransform(const TransformID& transform, const hmm_mat4& newLoc
 {
 	local[transform.index] = newLocal;
 	world[transform.index] = world[parents[transform.index]] * local[transform.index];
-}
-
-void Scene::render()
-{
-	for (int i = 0; i < nextFree; ++i)
-	{
-		if (bVisible[i])
-		{
-			bVisible[i] = !bVisible[i];
-		}
-	}
 }
 
 void Scene::buildFromSceneTree(const SceneTree& tree)

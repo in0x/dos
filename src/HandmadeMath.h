@@ -2793,10 +2793,10 @@ struct hmm_frustum
 	{
 		hmm_mat4 vp = projMat * viewMat;
 	
-		// 0 4 8  12
-		// 1 5 9  13
+		// 0 4  8 12
+		// 1 5  9 13
 		// 2 6 10 14
-		// 3 7 11 14
+		// 3 7 11 15
 
 		sides[FS_LEFT].n.X = vp.Elements[3][0] + vp.Elements[0][0];
 		sides[FS_LEFT].n.Y = vp.Elements[3][1] + vp.Elements[0][1];
@@ -2827,6 +2827,11 @@ struct hmm_frustum
 		sides[FS_FAR].n.Y = vp.Elements[3][1] - vp.Elements[2][1];
 		sides[FS_FAR].n.Z = vp.Elements[3][2] - vp.Elements[2][2];
 		sides[FS_FAR].d =   vp.Elements[3][3] - vp.Elements[2][3];
+
+		for (size_t i = 0; i < 6; ++i)
+		{
+			HMM_Normalize(sides[i]);
+		}
 	}
 };
 
@@ -2837,9 +2842,9 @@ HINLINE bool HMM_Intersects(const hmm_frustum& frustum, const hmm_sphere& sphere
 
 	for (size_t i = 0; i < 6; ++i)
 	{
-		float dist = HMM_DotVec3(center.XYZ, frustum.sides[i].n) - frustum.sides[i].d;
+		float dist = HMM_DotVec3(center.XYZ, frustum.sides[i].n) + frustum.sides[i].d;
 
-		if (dist > -radius)
+		if (dist < 0.f)
 		{
 			return false;
 		}

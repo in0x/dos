@@ -18,7 +18,6 @@ struct Scene
 	TransformID addTransform(); // Parent will be root.
 	TransformID addTransform(const hmm_mat4& localTrafo);
 
-	void render();
 	void resize(int size);
 	void resetNode(int idx);
 	void updateWorldBounds();
