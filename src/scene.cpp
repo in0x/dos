@@ -96,7 +96,7 @@ void Scene::cullScene(const hmm_frustum& frustum)
 
 void Scene::cullSceneHierarchical(const hmm_frustum& frustum)
 {
-	for (int i = 0; i < nextFree;)
+	for (int i = 0; i < nextFree; ++i)
 	{
 		bVisible[i] = HMM_Intersects(frustum, worldBounds[i]);
 
@@ -110,10 +110,6 @@ void Scene::cullSceneHierarchical(const hmm_frustum& frustum)
 				nextSubTree++;
 			}
 			i = nextSubTree;
-		}
-		else
-		{
-			i++;
 		}
 	}
 }
@@ -155,4 +151,9 @@ void Scene::visitSceneDF(std::shared_ptr<TransformNode> node, int parentIdx, int
 
 		visitSceneDF(child, nodeCount, nodeCount);
 	}
+}
+
+void Scene::render()
+{
+
 }

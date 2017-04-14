@@ -3,8 +3,7 @@
 #include "tree.h"
 #include "shader.h"
 
-
-int main(int argc, char** argv)
+int glMain()
 {
 	if (!glfwInit())
 	{
@@ -108,8 +107,7 @@ int main(int argc, char** argv)
 		glClearBufferfv(GL_COLOR, 0, color);
 		glUseProgram(progHandle);
 
-		//hmm_mat4 transMat = HMM_Translate(HMM_Vec3(0, HMM_SinF(totalTime), 0));
-		hmm_mat4 transMat = HMM_Translate(HMM_Vec3(HMM_SinF(totalTime / 10.f) * 10.f, 0, 0));
+		hmm_mat4 transMat = HMM_Translate(HMM_Vec3(0, HMM_SinF(totalTime / 10.f) * 10.f, 0));
 		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 100.f, { 0,1,0 });
 
 		auto root = scene.getRoot();
@@ -154,79 +152,133 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-//int main(int argc, char** argv)
-//{
-//	int levels = 6;
-//	int children = 6;
-//
-//	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
-//	int numTests = 100;
-//
-//	printf("Numnodes: %i", numNodes);
-//	check(numNodes < MAX_ENTITIES);
-//
-//	hmm_mat4 viewMat = HMM_LookAt(HMM_Vec3(0, 0, -10), HMM_Vec3(0, 0, 0), HMM_Vec3(0, 1, 0));
-//	hmm_mat4 projMat = HMM_Perspective(60, 1280.f / 720.f, 1, 100); 
-//	hmm_frustum frustum(projMat, viewMat);
-//
-//	// Split test
-//	printf("\n\nSPLIT DF TEST\n");
-//
-//	using ms = std::chrono::duration<float, std::milli>;
-//	using time = std::chrono::time_point<std::chrono::steady_clock>;
-//	std::chrono::high_resolution_clock timer;
-//
-//	time start;
-//	time end;
-//
-//	float deltaTime = 0.f;
-//	float totalRuntime = 0.f;
-//
-//	Scene scene;
-//	SceneTree tree;
-//
-//	tree = SceneTree::buildBalancedTree(levels, children);
-//	scene.buildFromSceneTree(tree);
-//
-//	for (int i = 0; i < numTests; ++i)
-//	{
-//		start = timer.now();
-//
-//		scene.updateWorldTransforms();
-//		scene.cullSceneHierarchical(frustum);
-//		scene.render();
-//
-//		end = timer.now();
-//		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-//		totalRuntime += deltaTime;
-//	}
-//
-//	printf("Number of nodes: %d\n", scene.nextFree);
-//	printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);
-//	
-//	// Tree Depth First test
-//	printf("\n\nTREE DEPTH FIRST TEST\n");
-//
-//	SceneTree transformTree = SceneTree::buildBalancedTree(levels, children);
-//
-//	deltaTime = 0.f;
-//	totalRuntime = 0.f;
-//
-//	for (int i = 0; i < numTests; ++i)
-//	{
-//		start = timer.now();
-//
-//		transformTree.updateWorldTransformsDFS();
-//		transformTree.cullSceneTreeHierarchical(frustum);
-//		transformTree.renderTree();
-//
-//		end = timer.now();
-//		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
-//		totalRuntime += deltaTime;
-//	}
-//
-//	printf("Number of nodes: %d\n", numNodes);
-//	printf("Over %d samples, update took: %f ms on avg\n", numTests, totalRuntime / numTests);	
-//
-//	return 0;
-//}
+std::vector<float> sceneResults;
+std::vector<float> treeResults;
+
+void testScene(int levels, int children, int samples, const hmm_frustum& frustum, std::ofstream& outFile)
+{
+	printf("\n\nSPLIT DF TEST\n");
+	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
+
+	std::chrono::high_resolution_clock timer;
+
+	c_time start;
+	c_time end;
+
+	float deltaTime = 0.f;
+	float totalRuntime = 0.f;
+
+	Scene scene;
+	SceneTree tree;
+
+	tree = SceneTree::buildBalancedTree(levels, children);
+	scene.buildFromSceneTree(tree);
+
+	for (int i = 0; i < samples; ++i)
+	{
+		start = timer.now();
+
+		scene.updateWorldTransforms();
+		scene.updateWorldBounds();
+		scene.cullSceneHierarchical(frustum);
+		scene.render();
+
+		end = timer.now();
+		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+		totalRuntime += deltaTime;
+	}
+
+	float result = totalRuntime / samples;
+
+	//printf("Number of nodes: %d\n", numNodes);
+	//printf("Over %d samples, update took: %f ms on avg\n", samples, result);
+
+	outFile << numNodes << "," << result << '\n';
+	sceneResults.push_back(result);
+
+	// Tree Depth First test
+}
+
+void testTree(int levels, int children, int samples, const hmm_frustum& frustum, std::ofstream& outFile)
+{
+	printf("\n\nTREE DEPTH FIRST TEST\n");
+	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
+
+	SceneTree transformTree = SceneTree::buildBalancedTree(levels, children);
+
+	std::chrono::high_resolution_clock timer;
+
+	c_time start;
+	c_time end;
+
+	float deltaTime = 0.f;
+	float totalRuntime = 0.f;
+
+	for (int i = 0; i < samples; ++i)
+	{
+		start = timer.now();
+
+		transformTree.updateWorldTransformsDFS();
+		transformTree.cullSceneTreeHierarchical(frustum);
+		transformTree.renderTree();
+
+		end = timer.now();
+		deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+		totalRuntime += deltaTime;
+	}
+
+	float result = totalRuntime / samples;
+
+	//printf("Number of nodes: %d\n", numNodes);
+	//printf("Over %d samples, update took: %f ms on avg\n", samples, result);
+
+	outFile << numNodes << "," << result << '\n';
+	treeResults.push_back(result);
+}
+
+int benchMain()
+{
+	int levels = 18;
+	int children = 2;
+
+	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
+	int samples = 100;
+
+	printf("Numnodes: %i", numNodes);
+	check(numNodes < MAX_ENTITIES);
+
+	hmm_mat4 viewMat = HMM_LookAt(HMM_Vec3(0, 0, -10), HMM_Vec3(0, 0, 0), HMM_Vec3(0, 1, 0));
+	hmm_mat4 projMat = HMM_Perspective(60, 1280.f / 720.f, 1, 100);
+	hmm_frustum frustum(projMat, viewMat);
+
+	std::ofstream scene_csv;
+	std::ofstream tree_csv;
+
+	scene_csv.open("../bin/scene.csv");
+	tree_csv.open("../bin/tree.csv");
+
+	scene_csv << "Scene Nodes, Scene Time\n";
+	tree_csv << "Tree Nodes, Tree Time\n";
+
+	for (int levels_test = 1; levels_test <= levels; ++levels_test)
+	{
+		testScene(levels_test, children, samples, frustum, scene_csv);
+		testTree(levels_test, children, samples, frustum, tree_csv);
+	}
+
+	std::size_t count = sceneResults.size();
+	float total = 0.0f;
+	for (std::size_t i = 0; i < count; ++i)
+	{
+		total += /*1.0f -*/ (treeResults[i] / sceneResults[i]);
+	}
+	printf("Average relative performance: %f \n", total / levels);
+
+	return 0;
+}
+
+int main(int argc, char** argv)
+{
+	//return glMain();
+	return benchMain();
+}

@@ -18,6 +18,7 @@ struct Scene
 	TransformID addTransform(); // Parent will be root.
 	TransformID addTransform(const hmm_mat4& localTrafo);
 
+	void render();
 	void resize(int size);
 	void resetNode(int idx);
 	void updateWorldBounds();
@@ -30,7 +31,7 @@ struct Scene
 
 	std::vector<hmm_mat4> local;
 	std::vector<hmm_mat4> world;
-	std::vector<uint16_t> parents;
+	std::vector<uint32_t> parents;
 	std::vector<hmm_sphere> localBounds;
 	std::vector<hmm_sphere> worldBounds;
 	std::vector<bool> bVisible;

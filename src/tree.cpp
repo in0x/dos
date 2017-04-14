@@ -73,11 +73,6 @@ void SceneTree::cullNodeHierarchical(std::shared_ptr<TransformNode> node, const 
 
 void SceneTree::renderNode(std::shared_ptr<TransformNode> node)
 {
-	if (node->bVisible)
-	{
-		node->bVisible = !node->bVisible;
-	}
-
 	for (auto& child : node->children)
 	{
 		renderNode(child);
