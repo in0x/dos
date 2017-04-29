@@ -81,25 +81,28 @@ int glMain()
 	using time_t = std::chrono::time_point<std::chrono::steady_clock>;
 
 	std::chrono::high_resolution_clock timer;
+	c_time start;
+	c_time end;
 
-	time_t lastFrametime = timer.now();
+	int levels = 14;
+	int children = 2;
 
-	SceneTree tree = SceneTree::buildBalancedTree(2, 2);
+	SceneTree tree = SceneTree::buildBalancedTree(levels, children);
 	Scene scene;
 	scene.buildFromSceneTree(tree);
+
+	int numNodes = (std::pow(children, levels + 1) - 1) / (children - 1);
+	printf("Nodes(#) = %d\n", numNodes);
 
 	hmm_frustum frustum(projMat, viewMat);
 
 	float totalTime = 0.f;
+	float frames = 100;
+	float currentFrame = 0;
 	srand(time(0));
 
 	while (!glfwWindowShouldClose(window))
 	{
-		auto nowFrameTime = timer.now();
-		auto deltaTime = std::chrono::duration_cast<ms>(nowFrameTime - lastFrametime).count() / 1000.f;
-		lastFrametime = nowFrameTime;
-		totalTime += deltaTime;
-
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_MULTISAMPLE);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -107,35 +110,29 @@ int glMain()
 		glClearBufferfv(GL_COLOR, 0, color);
 		glUseProgram(progHandle);
 
-		hmm_mat4 transMat = HMM_Translate(HMM_Vec3(0, HMM_SinF(totalTime / 10.f) * 10.f, 0));
-		hmm_mat4 rotMat = HMM_Rotate(deltaTime * 100.f, { 0,1,0 });
-
-		auto root = scene.getRoot();
-		scene.local[root.index] = transMat;
-
-		//int randomIdx = rand() % scene.nextFree;
-		//scene.local[4] = scene.local[4] * rotMat;
-
 		glBindVertexArray(vao);
 		glUniform3f(2, 0.f, 1.f, -3.f);
 		glUniformMatrix4fv(4, 1, GL_FALSE, (GLfloat*)&viewMat.Elements);
 		glUniformMatrix4fv(5, 1, GL_FALSE, (GLfloat*)&projMat.Elements);
 
+		start = timer.now();
+
 		scene.updateWorldTransforms();
 		scene.updateWorldBounds();
 		scene.cullSceneHierarchical(frustum);
 
-		int nodesDrawn = 0;
 		for (size_t i = 0; i < scene.nextFree; ++i)
 		{
 			if (scene.bVisible[i])
 			{
 				glUniformMatrix4fv(3, 1, GL_FALSE, (GLfloat*)&(scene.world[i]));
 				glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-				nodesDrawn++;
 			}
 		}
-		printf("Nodes sent to render: %d\n", nodesDrawn);
+
+		end = timer.now();
+		float deltaTime = std::chrono::duration_cast<ms>(end - start).count();
+		totalTime += deltaTime;
 
 		glfwSwapBuffers(window);
 
@@ -143,7 +140,14 @@ int glMain()
 		glDisable(GL_DEPTH_TEST);
 
 		glfwPollEvents();
+
+		currentFrame++;
+
+		if (currentFrame >= frames)
+			break;
 	}
+
+	printf("Result: %f ms on avg per frame\n", totalTime / frames);
 
 	glfwDestroyWindow(window);
 	glDeleteProgram(progHandle);
@@ -279,6 +283,6 @@ int benchMain()
 
 int main(int argc, char** argv)
 {
-	//return glMain();
-	return benchMain();
+	return glMain();
+	//return benchMain();
 }
