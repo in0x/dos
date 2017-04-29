@@ -283,6 +283,6 @@ int benchMain()
 
 int main(int argc, char** argv)
 {
-	return glMain();
-	//return benchMain();
+	/*return glMain();*/
+	return benchMain();
 }
